@@ -2,12 +2,12 @@
 
 ## Two layers: Engine vs. Game
 
-Split your code into two conceptual layers from day one. It's the single
-highest-leverage architectural decision you'll make.
+Split my code into two conceptual layers from day one. It's the single
+highest-leverage architectural decision I'll make.
 
 - **Engine layer** — generic, reusable, knows nothing about "Hopper" or
   "the Grump." Handles the game loop, input, rendering, camera, audio,
-  asset loading, collision math. You could reuse this layer for a completely
+  asset loading, collision math. I could reuse this layer for a completely
   different game.
 - **Game layer** — everything specific to *this* game: the player entity,
   enemy behaviors, level data, HUD, win/lose rules.
@@ -55,7 +55,7 @@ Everything is driven by one loop, called roughly 60 times a second via
 2. **Render** — draw the current state to the canvas. Rendering never changes
    game state; it only reads it.
 
-Keeping "update" and "render" strictly separate is what lets you pause,
+Keeping "update" and "render" strictly separate is what lets me pause,
 slow-motion, or add a spectator/replay mode later without rewriting anything.
 
 ```js
@@ -160,7 +160,7 @@ stateDiagram-v2
 ```
 
 A single character state feeds directly into which animation clip plays —
-this is the link between `05-game-loop-and-physics.md` (what state you're in)
+this is the link between `05-game-loop-and-physics.md` (what state I'm in)
 and `06-animation-system.md` (what that looks like on screen).
 
 ## Systems
@@ -215,7 +215,7 @@ z-index system needed for a 2D platformer:
 1. Sky/background color or gradient
 2. Parallax background layers (far → near)
 3. Tilemap (level geometry)
-4. Entities (enemies, pickups, player, projectiles) — sorted by Y if you want
+4. Entities (enemies, pickups, player, projectiles) — sorted by Y if I want
    pseudo-depth, optional for a platformer
 5. Particles/effects
 6. HUD (score, health, lives) — drawn last, in screen space (not world space)

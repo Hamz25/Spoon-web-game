@@ -3,7 +3,7 @@
 ## Full project layout
 
 A single repo containing both the game and the sprite-editor tool as sibling
-projects works well — they share concepts and you'll bounce between them.
+projects works well — they share concepts and I'll bounce between them.
 
 ```
 mario-style-game/
@@ -72,7 +72,7 @@ mario-style-game/
 │
 ├── assets/
 │   ├── sprites/
-│   │   ├── hopper.png             Player sprite sheet (exported from your editor)
+│   │   ├── hopper.png             Player sprite sheet (exported from my editor)
 │   │   ├── hopper.json            Frame metadata for hopper.png
 │   │   └── enemies/
 │   │       ├── grump.png
@@ -111,18 +111,18 @@ mario-style-game/
 ## Why this shape?
 
 - **`engine/` vs `game/`** mirrors the architectural split from
-  `02-architecture.md`. If you ever start a second game, you copy `engine/`
+  `02-architecture.md`. If I ever start a second game, I copy `engine/`
   wholesale and write a new `game/`.
 - **`assets/*.json` next to `*.png`** — every sprite sheet ships with its own
   metadata file describing frame rectangles and animation clips. This is the
-  exact format your sprite editor will export (see `09-sprite-editor-tool.md`
+  exact format my sprite editor will export (see `09-sprite-editor-tool.md`
   and `06-animation-system.md`).
-- **`levels/data/*.json`** — level layouts are data, not code. This means you
+- **`levels/data/*.json`** — level layouts are data, not code. This means I
   (or eventually a level editor) can add new levels without touching engine
   code.
 - **`tools/sprite-editor/`** is intentionally isolated — it doesn't import
   anything from `src/game/`, only shares low-level concepts (canvas, JSON
-  export format). You could delete it or move it to its own repo at any point
+  export format). I could delete it or move it to its own repo at any point
   without breaking the game.
 - **`test/`** holds only pure-logic tests — things with no canvas/DOM
   dependency (AABB math, state machine transitions). See
@@ -149,6 +149,6 @@ mario-style-game/
 ```
 
 `image-rendering: pixelated` is important — without it, the browser smooths
-(blurs) your pixel art when it's scaled up.
+(blurs) my pixel art when it's scaled up.
 
 Next: `04-data-structures-and-algorithms.md`.

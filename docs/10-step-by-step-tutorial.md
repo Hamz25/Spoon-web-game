@@ -2,7 +2,7 @@
 
 Work through these milestones in order. Each one names the concept, links
 back to the doc that explains it in depth, gives a small real snippet to
-show the pattern, and ends with **"Your task"** — what you write yourself.
+show the pattern, and ends with **"My task"** — what I write myself.
 Don't skip ahead; each milestone assumes the previous one runs.
 
 ---
@@ -18,9 +18,9 @@ npm run dev
 
 Replace the generated `index.html`/`main.js` with the versions in
 `03-file-structure.md`. Create the folder skeleton from that doc now (empty
-files are fine — you'll fill them in as you go).
+files are fine — I'll fill them in as I go).
 
-**Your task:** get `npm run dev` showing a blank page with a visible canvas
+**My task:** get `npm run dev` showing a blank page with a visible canvas
 element (give it a background color temporarily to confirm it's there).
 
 ---
@@ -46,7 +46,7 @@ function render() {
 new Loop(update, render).start();
 ```
 
-**Your task:** confirm the canvas clears to sky-blue every frame (open dev
+**My task:** confirm the canvas clears to sky-blue every frame (open dev
 tools → Performance tab, confirm it's steady near 60fps).
 
 ---
@@ -55,7 +55,7 @@ tools → Performance tab, confirm it's steady near 60fps).
 
 Draw a placeholder box at a fixed position — a stand-in until real art exists.
 
-**Your task:** create `Entity.js` and `Player.js` per `03-file-structure.md`.
+**My task:** create `Entity.js` and `Player.js` per `03-file-structure.md`.
 Give the player a `position` and `size`, and draw a filled rectangle at
 `player.position` each frame.
 
@@ -79,7 +79,7 @@ class InputManager {
 }
 ```
 
-**Your task:** move the placeholder rectangle left/right with the arrow keys
+**My task:** move the placeholder rectangle left/right with the arrow keys
 (no physics yet — just `position.x += speed * dt`).
 
 ---
@@ -89,7 +89,7 @@ class InputManager {
 Concept: `08-tilemaps-and-levels.md`. Build `Camera.js`, subtract
 `camera.x/y` when drawing the player.
 
-**Your task:** make the "world" wider than the canvas (e.g. draw a few
+**My task:** make the "world" wider than the canvas (e.g. draw a few
 vertical reference lines every 100px across a 2000px-wide world) and confirm
 the camera follows the player and stops at the world edges.
 
@@ -99,7 +99,7 @@ the camera follows the player and stops at the world edges.
 
 Concept: `05-game-loop-and-physics.md`, full physics section.
 
-**Your task:** implement `PHYSICS` constants, apply gravity every frame, and
+**My task:** implement `PHYSICS` constants, apply gravity every frame, and
 get jumping working — including variable jump height and coyote time. There's
 no ground yet, so temporarily treat `y = 300` as the floor to test against.
 
@@ -111,7 +111,7 @@ Concept: `04-data-structures-and-algorithms.md` (Tilemap) +
 `05-game-loop-and-physics.md` (collision resolution) + `08-tilemaps-and-levels.md`
 (level JSON, culled rendering).
 
-**Your task:**
+**My task:**
 1. Hand-write one small `level-1.json` (a flat strip of ground with a gap or
    two, per the schema in `08-tilemaps-and-levels.md`).
 2. Build `Tilemap.js` and `LevelLoader.js`.
@@ -119,23 +119,23 @@ Concept: `04-data-structures-and-algorithms.md` (Tilemap) +
    separate-axis algorithm.
 4. Render the tilemap (culled to the camera viewport).
 
-This is the biggest milestone — take your time here. Once it works, the game
+This is the biggest milestone — take my time here. Once it works, the game
 finally "feels like a platformer."
 
 ---
 
-## Milestone 7 — Build the sprite editor & draw your character
+## Milestone 7 — Build the sprite editor & draw my character
 
 Concept: the entirety of `09-sprite-editor-tool.md`.
 
-**Your task:** build the editor as its own mini-app (it doesn't depend on
+**My task:** build the editor as its own mini-app (it doesn't depend on
 anything from the game). Draw:
-- An idle frame and 2 run frames for your player character.
+- An idle frame and 2 run frames for my player character.
 - Export as `hopper.png` + `hopper.json` into `assets/sprites/`.
 
-You don't need every tool (bucket fill, onion skinning) working to move on —
+I don't need every tool (bucket fill, onion skinning) working to move on —
 pencil + eraser + export is enough to unblock Milestone 8. Come back and
-finish the editor's polish whenever you like.
+finish the editor's polish whenever I like.
 
 ---
 
@@ -143,7 +143,7 @@ finish the editor's polish whenever you like.
 
 Concept: `06-animation-system.md`.
 
-**Your task:**
+**My task:**
 1. Build `AssetLoader.js` to fetch the PNG + JSON.
 2. Build `SpriteSheet.js` and `Animator.js`.
 3. Replace the placeholder rectangle with `animator.draw(...)`.
@@ -157,12 +157,12 @@ Concept: `06-animation-system.md`.
 Concept: `02-architecture.md` (entities/state) + `07-shooting-and-combat.md`
 (stomp collision).
 
-**Your task:**
+**My task:**
 1. Build `Enemy.js` with a trivial patrol behavior: walk one direction,
    reverse on hitting a wall or reaching a ledge (check the tile ahead-and-below
    with `tilemap.tileAt`).
 2. Add stomp-vs-hurt collision resolution between player and enemy.
-3. Draw your enemy in the sprite editor and wire its animation the same way
+3. Draw my enemy in the sprite editor and wire its animation the same way
    as the player.
 
 ---
@@ -171,7 +171,7 @@ Concept: `02-architecture.md` (entities/state) + `07-shooting-and-combat.md`
 
 Concept: `07-shooting-and-combat.md`, full section.
 
-**Your task:** implement `Projectile.js`, the object pool, fire-rate limiting,
+**My task:** implement `Projectile.js`, the object pool, fire-rate limiting,
 and projectile-vs-enemy collision. Add a "shoot" animation clip and time the
 spawn to a specific frame, per `06-animation-system.md`'s muzzle-frame example.
 
@@ -181,7 +181,7 @@ spawn to a specific frame, per `06-animation-system.md`'s muzzle-frame example.
 
 Concept: `02-architecture.md`'s game-level FSM diagram.
 
-**Your task:**
+**My task:**
 1. Build `Scene.js` and at least `MenuScene`, `PlayScene`, `GameOverScene`.
 2. Build `HUD.js`: score, lives/health, drawn last, in screen space.
 3. Wire win condition (reach a flag/end-of-level trigger) and lose condition
@@ -193,7 +193,7 @@ Concept: `02-architecture.md`'s game-level FSM diagram.
 
 Concept: `01-tech-stack.md` (Web Audio API).
 
-**Your task:** build `AudioManager.js` with `play(name)` for one-shot SFX
+**My task:** build `AudioManager.js` with `play(name)` for one-shot SFX
 (jump, shoot, stomp, hurt) and `playMusic(name)` for a looping track, plus a
 mute toggle. Subscribe SFX playback to the event bus (`enemyDefeated` →
 stomp sound, etc.) rather than calling audio code inline everywhere.
@@ -204,17 +204,17 @@ stomp sound, etc.) rather than calling audio code inline everywhere.
 
 Concept: `11-testing-performance-deployment.md`.
 
-**Your task:** run a performance pass (object pooling in place? offscreen
-tiles culled?), write a couple of Vitest unit tests for your collision math,
+**My task:** run a performance pass (object pooling in place? offscreen
+tiles culled?), write a couple of Vitest unit tests for my collision math,
 then `npm run build` and deploy the `dist/` folder to GitHub Pages, Netlify,
 or Vercel.
 
 ---
 
-## You're done when...
+## I'm done when...
 
-- [ ] You can run, jump, and land on tile-based ground.
-- [ ] Your player animates (idle/run/jump) using art you drew yourself.
+- [ ] I can run, jump, and land on tile-based ground.
+- [ ] My player animates (idle/run/jump) using art I drew myself.
 - [ ] At least one enemy patrols and can be defeated by stomping or shooting.
 - [ ] Health/lives and a score are tracked and shown in a HUD.
 - [ ] There's a menu, a playable level, and a game-over/win screen.

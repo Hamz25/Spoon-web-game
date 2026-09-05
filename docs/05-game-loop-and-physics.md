@@ -141,7 +141,7 @@ function update(dt) {
 
 ## One-way platforms (a common Mario-style feature)
 
-A platform you can jump up through but land on top of: only resolve a
+A platform I can jump up through but land on top of: only resolve a
 collision on the Y axis when the entity is moving downward *and* was above
 the platform's top edge last frame.
 

@@ -31,7 +31,7 @@ here's where to go next, roughly ordered by effort.
   than `localStorage`'s string-only, ~5MB limit.
 - **Mobile touch controls** — on-screen buttons feeding the same
   `InputManager` interface (see `11-testing-performance-deployment.md`).
-- **A level editor** — genuinely just your sprite editor's grid concept
+- **A level editor** — genuinely just my sprite editor's grid concept
   applied to tiles instead of pixels: a `Tilemap`-sized grid, a tileset
   palette to pick from, paint with click, export to the same level JSON
   schema from `08-tilemaps-and-levels.md`.
@@ -54,7 +54,7 @@ here's where to go next, roughly ordered by effort.
   only after the single-player game is solid.
 - **Accessibility** — remappable controls (store key bindings in
   `InputManager` as data, not hardcoded), a colorblind-friendly palette
-  option for your sprite work, adjustable game speed.
+  option for my sprite work, adjustable game speed.
 
 ## A note on scope
 

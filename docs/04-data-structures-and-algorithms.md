@@ -1,7 +1,7 @@
 # 04 — Data Structures & Algorithms
 
 A platformer looks simple on screen but leans on a specific, well-understood
-set of data structures and algorithms. Here's every one you'll actually use,
+set of data structures and algorithms. Here's every one I'll actually use,
 why, and its complexity.
 
 ## Vector2 — the atomic data structure
@@ -61,19 +61,19 @@ class Tilemap {
 ## Broad-phase vs. narrow-phase collision
 
 - **Narrow-phase**: the exact AABB test above, run on a *specific* pair.
-- **Broad-phase**: deciding *which* pairs are even worth testing, so you're
+- **Broad-phase**: deciding *which* pairs are even worth testing, so I'm
   not comparing every entity against every other entity every frame.
 
 | Approach | Complexity | When to use |
 |---|---|---|
 | Naive (test everything against everything) | O(n²) | Fine up to a few dozen entities — most platformer levels never exceed this. Start here. |
-| Spatial grid (bucket entities into fixed-size cells, only test entities sharing a cell) | ~O(n) average | If you have many enemies/bullets on screen at once and profiling shows collision is a bottleneck. |
-| Quadtree (recursively subdivide space) | O(n log n) build, fast queries | Larger/denser worlds. Overkill for a first Mario-style game — mention it so you know it exists. |
+| Spatial grid (bucket entities into fixed-size cells, only test entities sharing a cell) | ~O(n) average | If I have many enemies/bullets on screen at once and profiling shows collision is a bottleneck. |
+| Quadtree (recursively subdivide space) | O(n log n) build, fast queries | Larger/denser worlds. Overkill for a first Mario-style game — mention it so I know it exists. |
 
 **Recommendation:** start naive. A Mario-style level rarely has more than
 ~30–50 active entities at once; O(n²) on 50 entities is 2,500 checks, trivial
 for a modern browser at 60fps. Only reach for a spatial grid if profiling
-(see `11-testing-performance-deployment.md`) tells you to.
+(see `11-testing-performance-deployment.md`) tells me to.
 
 ## Tile collision resolution algorithm (separate-axis)
 
@@ -107,7 +107,7 @@ overlaps — not the whole map).
 ## Finite State Machine (FSM) — as a data structure
 
 A state machine is just a map from state name → behavior + transitions. This
-makes it a genuine data structure you can inspect, serialize, or visualize —
+makes it a genuine data structure I can inspect, serialize, or visualize —
 not just a pile of `if` statements.
 
 ```js
@@ -149,7 +149,7 @@ class ObjectPool {
 }
 ```
 **Complexity:** O(n) to find a free slot in the naive version above (fine for
-pools of a few dozen bullets); if you outgrow that, keep a small stack/queue
+pools of a few dozen bullets); if I outgrow that, keep a small stack/queue
 of "free indices" for O(1) obtain/release.
 
 ## Sprite sheet frame data — array of records
@@ -241,7 +241,7 @@ fine at sprite-editor resolutions).
 
 ## (Optional, advanced) A* pathfinding
 
-Only relevant if you want smarter enemies than "walk until you hit a wall or
+Only relevant if I want smarter enemies than "walk until I hit a wall or
 ledge, then turn around." A* uses a **priority queue** (min-heap) keyed by
 estimated total cost to find a shortest path across the tilemap. This is
 genuinely optional for a first Mario-style game — simple patrol/chase logic

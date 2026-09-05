@@ -29,7 +29,7 @@ class Projectile {
 ## Pooling projectiles
 
 Bullets are created and destroyed constantly — a textbook case for the
-`ObjectPool` pattern from `04-data-structures-and-algorithms.md`, so you're
+`ObjectPool` pattern from `04-data-structures-and-algorithms.md`, so I'm
 not triggering garbage collection every time the player fires.
 
 ```js
@@ -99,7 +99,7 @@ function updateInvulnerability(player, dt) {
 ```
 
 **i-frames (invulnerability frames)** are essential — without them, standing
-in a hazard can drain all your health in a single frame.
+in a hazard can drain all my health in a single frame.
 
 ## Two classic Mario-style hit interactions
 
@@ -124,8 +124,8 @@ function resolvePlayerEnemyCollision(player, enemy, events) {
 
 2. **Shooting** — as above, ranged combat via `Projectile`.
 
-You can mix both: some enemies are only vulnerable to shots (e.g. flying
-enemies you can't stomp), which is a good use of the `tags` set on `Entity`.
+I can mix both: some enemies are only vulnerable to shots (e.g. flying
+enemies I can't stomp), which is a good use of the `tags` set on `Entity`.
 
 ## Game feel extras (small effort, big payoff)
 

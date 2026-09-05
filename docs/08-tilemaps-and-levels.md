@@ -3,7 +3,7 @@
 ## Level data as JSON, not code
 
 Levels are data. Keeping them as JSON (rather than hard-coded arrays in JS)
-means you can add levels — or eventually build a level editor — without
+means I can add levels — or eventually build a level editor — without
 touching engine or game logic.
 
 ```json
@@ -106,7 +106,7 @@ function renderParallaxLayer(ctx, layerImage, camera, scrollFactor) {
 
 ## One-way platforms and hazards via `tileTypes`
 
-Rather than hardcoding tile ID `2` as "platform" throughout your code, look
+Rather than hardcoding tile ID `2` as "platform" throughout my code, look
 up behavior by the level's own `tileTypes` map, so different tilesets can
 reuse the same engine code:
 
@@ -125,8 +125,8 @@ function isHazard(tilemap, col, row) {
 [Tiled](https://www.mapeditor.org/) is a free, popular map editor that
 exports JSON in a well-documented format. For anything beyond a couple of
 small hand-crafted levels, painting tiles visually beats hand-editing a
-numeric array. If you adopt it, `LevelLoader` just needs a translation step
-from Tiled's JSON shape into your `Tilemap`/`entities` shape above — the rest
+numeric array. If I adopt it, `LevelLoader` just needs a translation step
+from Tiled's JSON shape into my `Tilemap`/`entities` shape above — the rest
 of the engine doesn't change.
 
 ## Checklist

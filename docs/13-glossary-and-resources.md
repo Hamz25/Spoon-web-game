@@ -15,7 +15,7 @@
 | **Hit-stop** | Briefly freezing gameplay for a few milliseconds on a solid hit, to make combat feel more impactful. |
 | **i-frames (invulnerability frames)** | A short window after taking damage during which further hits are ignored. |
 | **Object pool** | A fixed set of pre-allocated, reusable objects (e.g. bullets) that are recycled instead of constantly created/destroyed, avoiding garbage-collection stutter. |
-| **One-way platform** | A platform you can jump up through from below but land on top of, implemented by only resolving downward collisions. |
+| **One-way platform** | A platform I can jump up through from below but land on top of, implemented by only resolving downward collisions. |
 | **Painter's algorithm** | Rendering back-to-front so nearer objects naturally overlap farther ones, without a full depth-buffer system. |
 | **Parallax scrolling** | Multiple background layers moving at different speeds relative to the camera, creating an illusion of depth. |
 | **Sprite sheet** | A single image containing every animation frame for a character or object, referenced by frame rectangles. |
@@ -29,10 +29,10 @@
 - **MDN — Web Audio API**: for anything beyond a plain `<audio>` tag (mixing, effects).
 - **Vite documentation** (vitejs.dev): dev server and build tooling used throughout this package.
 - **Vitest documentation** (vitest.dev): the test runner referenced in `11-testing-performance-deployment.md`.
-- **Phaser documentation** (phaser.io): a full-featured alternative once you understand the concepts here.
+- **Phaser documentation** (phaser.io): a full-featured alternative once I understand the concepts here.
 - **Tiled Map Editor** (mapeditor.org): a free visual tool for building tilemap levels, mentioned in `08-tilemaps-and-levels.md`.
 - **"Game Programming Patterns" by Robert Nystrom** (freely readable online): excellent deeper coverage of the Game Loop, Object Pool, State, and Observer patterns used throughout this package.
-- **freesound.org**: a good source of Creative-Commons-licensed sound effects if you don't want to record your own.
+- **freesound.org**: a good source of Creative-Commons-licensed sound effects if I don't want to record my own.
 
 ## Where each concept lives (quick index)
 
@@ -51,5 +51,5 @@
 | Testing, performance, deployment | `11-testing-performance-deployment.md` |
 | Power-ups, bosses, saves, mobile, multiplayer | `12-extending-the-game.md` |
 
-You've reached the end of the package — back to `README.md` for the overview,
+I've reached the end of the package — back to `README.md` for the overview,
 or `10-step-by-step-tutorial.md` to start building.

@@ -16,7 +16,7 @@ hopper.png (sprite sheet)
                                     frame 5    = hurt
 ```
 
-This PNG + a JSON file describing the frame rectangles is exactly what your
+This PNG + a JSON file describing the frame rectangles is exactly what my
 sprite editor tool (see `09-sprite-editor-tool.md`) will export, and exactly
 what the game loads.
 
@@ -88,7 +88,7 @@ class Animator {
 ## Wiring animation to the character state machine
 
 This is the payoff of the FSM from `02-architecture.md`: the *state* decides
-the animation, so you never manually decide "which sprite to draw" in
+the animation, so I never manually decide "which sprite to draw" in
 scattered places.
 
 ```js
@@ -110,7 +110,7 @@ function render(player, ctx, camera) {
 
 ## Example exported metadata format
 
-This is the JSON your sprite editor should produce next to each PNG — see
+This is the JSON my sprite editor should produce next to each PNG — see
 `09-sprite-editor-tool.md`'s `Exporter.js`:
 
 ```json

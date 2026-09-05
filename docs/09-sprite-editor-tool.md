@@ -1,15 +1,15 @@
-# 09 — Building Your Own Pixel-Art Sprite Editor
+# 09 — Building My Own Pixel-Art Sprite Editor
 
-This is a small, standalone web app you build to create the character,
-enemy, and tile art for your game — original art, so the finished game is
-genuinely yours. It exports files in exactly the format `06-animation-system.md`
+This is a small, standalone web app I build to create the character,
+enemy, and tile art for my game — original art, so the finished game is
+genuinely mine. It exports files in exactly the format `06-animation-system.md`
 expects.
 
 ## What it needs to do (scope)
 
 A minimal but genuinely useful pixel-art editor needs:
 
-1. A fixed-size pixel grid you draw on (e.g. 16×16 or 32×32).
+1. A fixed-size pixel grid I draw on (e.g. 16×16 or 32×32).
 2. A few tools: pencil, eraser, paint bucket (flood fill), eyedropper.
 3. A color palette (a handful of preset swatches + a custom color picker).
 4. Multiple **frames** (for animation) with a thumbnail strip.
@@ -153,7 +153,7 @@ document.addEventListener('keydown', e => {
 
 Store an array of `PixelGrid`s — one per animation frame — plus a "current
 frame" index. **Onion skinning** draws the *previous* frame at low opacity
-underneath the current one, so you can see where things were for smooth
+underneath the current one, so I can see where things were for smooth
 motion:
 
 ```js
@@ -264,7 +264,7 @@ the game then scales up at render time via `image-rendering: pixelated`.
 5. Add multiple frames + a thumbnail strip.
 6. Add onion skinning.
 7. Add export (PNG first, then the JSON metadata alongside it).
-8. Load your exported files straight into the game's `AssetLoader` and
+8. Load my exported files straight into the game's `AssetLoader` and
    confirm the animation plays — this closes the loop between the two tools.
 
 ## Stretch ideas (see `12-extending-the-game.md` for more)

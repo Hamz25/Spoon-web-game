@@ -54,7 +54,7 @@ anything requiring a real canvas — playtest those by hand instead.
 ## Manual playtesting checklist
 
 - Does jumping feel responsive, or floaty/sluggish? (tune `PHYSICS` constants)
-- Can you get stuck in geometry (corners, one-way platforms)?
+- Can I get stuck in geometry (corners, one-way platforms)?
 - Does the camera ever show outside the level bounds?
 - Is there ever a frame where an enemy or bullet visibly "teleports" through
   a wall (a sign `dt` isn't clamped, or collision isn't checked every fixed step)?
@@ -127,7 +127,7 @@ npm run build      # outputs to dist/
 3. Deploys automatically on every push.
 
 No environment variables, database, or backend config needed for the base
-game — only relevant if you add the multiplayer/cloud-save features from
+game — only relevant if I add the multiplayer/cloud-save features from
 `12-extending-the-game.md`.
 
 Next: `12-extending-the-game.md`.
