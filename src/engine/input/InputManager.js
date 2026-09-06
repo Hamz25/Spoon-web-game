@@ -1,6 +1,6 @@
 // THis class will handle any input from the user and based on that input will update the game state
 
-class InputManager {
+export class InputManager {
     constructor() { // The constructor will initialize the input manager and set up event listeners for key presses
         this.keys = new Set();
         window.addEventListener('keydown', e => this.keys.add(e.code));
