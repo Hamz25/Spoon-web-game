@@ -11,8 +11,6 @@ export class InputManager {
         const map = {
             left: ['ArrowLeft', 'KeyA'],
             right: ['ArrowRight', 'KeyD'],
-            up: ['ArrowUp', 'KeyW'],
-            down: ['ArrowDown', 'KeyS'],
             jump: ['Space', 'KeyW', 'ArrowUp'],
             crouch: ['ArrowDown', 'KeyS'],
         };
