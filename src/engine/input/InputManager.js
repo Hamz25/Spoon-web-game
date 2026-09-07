@@ -8,10 +8,14 @@ export class InputManager {
     }
     // this is a function that will check the input value of the key and return true if the key is pressed and false if it is not pressed
     isKeyPressed(keyCode) {
-        const map = { left: ['ArrowLeft', 'KeyA'], // Left arrow key or A key
-                    right: ['ArrowRight', 'KeyD'], // Right arrow key or D key
-                    jump: ['ArrowUp', 'KeySpace'], // Up arrow key or W key
-                    crouch: ['ArrowDown', 'KeyS'] }; // Down arrow key or S key
-        return map[keyCode].some(code => this.keys.has(code)); // Return the mapped key code if it is pressed
+        const map = {
+            left: ['ArrowLeft', 'KeyA'],
+            right: ['ArrowRight', 'KeyD'],
+            up: ['ArrowUp', 'KeyW'],
+            down: ['ArrowDown', 'KeyS'],
+            jump: ['Space', 'KeyW', 'ArrowUp'],
+            crouch: ['ArrowDown', 'KeyS'],
+        };
+        return map[keyCode].some(code => this.keys.has(code));
     }
 }
