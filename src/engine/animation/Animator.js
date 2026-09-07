@@ -14,7 +14,13 @@ export class Animator {
     }
 
     play(clipName) {
-        if (this.currentClip === clipName) return; // already playing this clip - don't restart it (avoids stutter every frame)
+        if (this.currentClip === clipName) return; // already playing this clip - don't restart it
+
+        if (!this.sheet.clips[clipName]) { // guard: does this clip actually exist in the loaded JSON?
+            console.warn(`Animator: no clip named "${clipName}" found - ignoring play() call`);
+            return; // stay on whatever clip was already playing, instead of crashing later in update()
+        }
+
         this.currentClip = clipName;
         this.frameIndex = 0;
         this.elapsed = 0;
