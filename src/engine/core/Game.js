@@ -42,6 +42,14 @@ export class Game {
         this.camera = new Camera(canvas.width, canvas.height);
         this.player = new Player();
 
+        // Respawning teleports the player, but camera.follow()'s easing would otherwise
+        // slowly drift the view back across the level toward the respawn point instead
+        // of cutting there instantly - snapTo bypasses that easing for this one case.
+        // This fires synchronously inside player.update() (before camera.follow() runs
+        // later in the same frame), so by the time follow() runs the camera is already
+        // exactly where it should be and the easing has nothing left to do.
+        this.events.on('playerDied', () => this.camera.snapTo(this.player, this.level.bounds));
+
         this.level = null;   // filled in by init() once level-1.json finishes loading
         this.tileset = null; // filled in by init() once the tileset image finishes loading
 
@@ -69,6 +77,14 @@ export class Game {
 
         this.player.position = new Vector2(this.level.playerStart.x, this.level.playerStart.y);
 
+        // The current respawn point. There's no real checkpoint system yet, so this
+        // just starts (and stays) at the level's playerStart - but Player.js reads
+        // this through `world.respawnPoint` rather than reaching for level.playerStart
+        // directly, so later a Checkpoint entity can simply do
+        // `game.checkpoint = new Vector2(x, y)` (e.g. via an eventBus 'checkpointReached'
+        // listener) and nothing in Player.js has to change.
+        this.checkpoint = new Vector2(this.level.playerStart.x, this.level.playerStart.y);
+
         // Lets anything listening know setup is done - a menu scene waiting to show
         // "Press Start", an analytics hook, AudioManager unlocking its context, etc.
         // Nothing currently subscribes to this, but it costs nothing to emit and
@@ -84,7 +100,11 @@ export class Game {
 
     // Runs every frame, before render() - advances the simulation by dt seconds.
     update(dt) {
-        this.player.update(dt, { tilemap: this.level.tilemap, bounds: this.level.bounds }, this.input);
+        this.player.update(dt, {
+            tilemap: this.level.tilemap,
+            bounds: this.level.bounds,
+            respawnPoint: this.checkpoint,
+        }, this.input);
         this.camera.follow(this.player, this.level.bounds);
     }
 
