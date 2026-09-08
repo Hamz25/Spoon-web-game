@@ -13,6 +13,7 @@ export class InputManager {
             right: ['ArrowRight', 'KeyD'],
             jump: ['Space', 'KeyW', 'ArrowUp'],
             crouch: ['ArrowDown', 'KeyS'],
+            sprint: ['ShiftLeft', 'ShiftRight'],
         };
         return map[keyCode].some(code => this.keys.has(code));
     }
