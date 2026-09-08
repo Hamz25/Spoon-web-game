@@ -2,7 +2,7 @@
 // This is the main game loop, which will call the update and render functions at a fixed timestep
 // It will also calculate the delta time (dt) between frames, which is passed to the update function
 
-export default class Loop {
+export class Loop {
 
     constructor(update, render) {
         this.lastTime = 0; // The last time the loop was called
