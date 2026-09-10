@@ -1,0 +1,24 @@
+WEBP FRAME EXTRACTION DETAILS
+===========================
+
+Original File: player2.webp
+Frames Extracted: 8
+Animation Duration: 1.00s
+Frame Format: PNG
+Image Dimensions: 32x32
+
+FRAME TIMING INFORMATION
+========================
+
+Frame 1: 125ms
+Frame 2: 125ms
+Frame 3: 125ms
+Frame 4: 125ms
+Frame 5: 125ms
+Frame 6: 125ms
+Frame 7: 125ms
+Frame 8: 125ms
+
+
+Extracted by ConvertICO.COM
+https://convertico.com/webp-frame-extractor/

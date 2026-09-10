@@ -1,0 +1,39 @@
+{
+    "originalFile": "player2.webp",
+    "frameCount": 8,
+    "width": 32,
+    "height": 32,
+    "format": "png",
+    "duration": 1,
+    "frameTiming": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+    ],
+    "frameBlendMethods": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+    ],
+    "frameDisposeMethods": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "extractionMethod": "imagemagick_coalesce"
+}

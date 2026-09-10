@@ -1,0 +1,14 @@
+{
+  "imageWidth": 48,
+  "imageHeight": 24,
+  "frameSize": { "w": 24, "h": 24 },
+  "frames": [
+    { "x": 0,  "y": 0, "w": 24, "h": 24 },
+    { "x": 24, "y": 0, "w": 24, "h": 24 }
+  ],
+"clips": {
+    "idle": { "frames": [0], "frameDuration": 1, "loop": true },
+    "run":  { "frames": [0, 1], "frameDuration": 0.15, "loop": true },
+    "jump": { "frames": [0], "frameDuration": 1, "loop": true }
+}
+}

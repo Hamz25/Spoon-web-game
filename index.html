@@ -2,12 +2,63 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>spoon-game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spoon-Game</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden; /* no scrollbars if the letterbox bars touch an edge */
+        background: #25231a;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        /* 100dvh accounts for mobile browser chrome (address bar, etc.)
+           sliding in/out - 100vh alone can leave a sliver of scroll on
+           phones. Falls back to 100vh on browsers without dvh support. */
+        height: 100vh;
+        height: 100dvh;
+      }
+
+      /*
+        This container - not the canvas itself - is what gets sized and
+        holds the aspect ratio. Doing it here rather than on the canvas
+        means the canvas's OWN box-sizing (border, etc.) never throws off
+        the aspect-ratio math; the canvas just fills whatever box this
+        computes.
+
+        The min() pair is the standard "biggest box that fits the viewport
+        without changing the shape" trick: width is capped by either the
+        full viewport width, OR by however wide a 640x360-shaped box could
+        get before it ran out of viewport HEIGHT - whichever is smaller.
+        Height mirrors it the other way. Between the two, exactly one of
+        them ends up being the real constraint on any given screen, and the
+        other resolves to "the full opposite dimension" - which is exactly
+        what produces letterboxing (black bars) on the side that ISN'T the
+        constraint, instead of cropping or stretching the game.
+      */
+      #game-container {
+        aspect-ratio: 640 / 360;
+        width: min(100vw, calc(100dvh * 640 / 360));
+        height: min(100dvh, calc(100vw * 360 / 640));
+        border: 3px solid #ffffff;
+        box-sizing: border-box;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated; /* keeps every scaled-up pixel crisp instead of blurring when the CSS size no longer matches the 640x360 internal resolution */
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="game-container">
+      <canvas id="game" width="640" height="360"></canvas>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

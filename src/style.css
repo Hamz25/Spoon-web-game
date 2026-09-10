@@ -52,6 +52,7 @@
 
 body {
   margin: 0;
+  background-color: #1f2634;
 }
 
 h1,
@@ -293,4 +294,189 @@ code {
     right: 0;
     border-right-color: var(--border);
   }
+}
+
+.menu-play-button {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 32px;
+    font-size: 20px;
+    cursor: pointer;
+
+    /* appearance - this is the part actually replacing the gray default */
+    background-color: #2e7d32;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.menu-play-button:hover {
+    background-color: #256428;
+}
+
+.menu-play-button:disabled {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
+}
+
+/* --- Birthday level additions below --- */
+
+/* Sits right under the normal Play button - reuses .menu-play-button for
+   everything else (color, padding, font) so this is ONLY repositioning it,
+   not restyling it. See MenuScene.js. */
+.menu-birthday-button {
+    top: calc(55% + 60px);
+    background-color: #d6336c;
+}
+.menu-birthday-button:hover {
+    background-color: #b02a5b;
+}
+
+/* The little toast that pops up near the bottom of the screen for walking
+   messages / "Pet the kitty" / "Press E to open". Hidden by default via
+   opacity + pointer-events, faded in with the .visible class - see
+   MessageBox.js. */
+.game-toast {
+    position: absolute;
+    left: 50%;
+    bottom: 12%;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(20, 16, 24, 0.85);
+    color: #ffffff;
+    font: bold 16px var(--sans, sans-serif);
+    text-align: center;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.game-toast.visible {
+    opacity: 1;
+}
+
+/* The chest "window" - a full-screen dimmed backdrop with a small card
+   centered on top of it. Hidden by default the same way the toast is. */
+.game-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.game-modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+.game-modal {
+    max-width: 420px;
+    margin: 20px;
+    padding: 28px 32px;
+    border-radius: 16px;
+    background: linear-gradient(160deg, #fff0f6, #fff9e6);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    text-align: center;
+}
+.game-modal-message {
+    margin: 0 0 20px;
+    font: 20px/145% var(--sans, sans-serif);
+    color: #4a2c3a;
+}
+.game-modal-close {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 8px;
+    background-color: #d6336c;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+}
+.game-modal-close:hover {
+    background-color: #b02a5b;
+}
+
+.audio-controls {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    background: #2b2740;
+    border: 2px solid #1a1826;
+    box-shadow:
+        3px 0 0 #1a1826,
+        0 3px 0 #1a1826,
+        3px 3px 0 #1a1826,
+        -3px 0 0 #1a1826,
+        0 -3px 0 #1a1826;
+    image-rendering: pixelated;
+}
+
+.audio-mute-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: #aa3bff; /* reusing the site's own --accent, since nothing pixel-specific exists to match yet */
+    color: #ffffff; /* the inline SVG icons use fill="currentColor", so this is what colors them */
+    border: 2px solid #1a1826;
+    box-shadow: 2px 2px 0 #1a1826;
+}
+.audio-mute-button:hover {
+    background-color: #922fe0;
+}
+.audio-mute-button.is-muted {
+    background-color: #4a4560;
+}
+
+/* CHANGED - vertical track. Width/height are swapped from the old
+   horizontal version (10px x 90px -> 10px wide, 90px tall). */
+.audio-volume-slider {
+    width: 10px;
+    height: 90px;
+    cursor: pointer;
+    appearance: none;
+    background: #1a1826;
+    border: 2px solid #1a1826;
+    outline: none;
+
+    /* Chrome / Safari */
+    -webkit-appearance: slider-vertical;
+
+    /* Firefox - no slider-vertical support, so this rotates the track
+       instead. bottom-to-top so dragging UP still means louder, matching
+       the native slider-vertical behavior above. */
+    writing-mode: vertical-lr;
+    direction: rtl;
+}
+.audio-volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background-color: #aa3bff;
+    border: 2px solid #1a1826;
+    cursor: pointer;
+}
+.audio-volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background-color: #aa3bff;
+    border: 2px solid #1a1826;
+    border-radius: 0;
+    cursor: pointer;
 }

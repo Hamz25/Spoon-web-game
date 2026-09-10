@@ -6,7 +6,7 @@ A single repo containing both the game and the sprite-editor tool as sibling
 projects works well — they share concepts and I'll bounce between them.
 
 ```
-mario-style-game/
+Spoon-Game/
 ├── index.html                     Entry HTML for the game
 ├── package.json
 ├── vite.config.js
@@ -53,9 +53,6 @@ mario-style-game/
 │   │   ├── levels/
 │   │   │   ├── Tilemap.js         Grid data + tile lookup helpers
 │   │   │   ├── LevelLoader.js     Parses level JSON into a Tilemap + entities
-│   │   │   └── data/
-│   │   │       ├── level-1.json
-│   │   │       └── level-2.json
 │   │   ├── scenes/
 │   │   │   ├── Scene.js           Base scene interface (enter/update/render/exit)
 │   │   │   ├── MenuScene.js
@@ -135,7 +132,7 @@ mario-style-game/
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Hopper's Adventure</title>
+    <title>Spoon-Game</title>
     <style>
       body { margin: 0; background: #1a1a2e; display: grid; place-items: center; height: 100vh; }
       canvas { image-rendering: pixelated; border: 2px solid #333; }

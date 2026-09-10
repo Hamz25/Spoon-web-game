@@ -1,0 +1,36 @@
+{
+  "group_id": "7343926d-efd1-4bb5-a003-117964154519",
+  "states": [
+    {
+      "character": {
+        "id": "084ebf5d-6768-4477-adba-9769f56a8f72",
+        "name": "Idle",
+        "prompt": "I want you to generate a girl charterer she is a Bit tall and she should wear black jeans with chains she has tall hair and looks like jane from breaking bad she has hangs too she listens to metal and a fan of HIM the artist so her style is similar BE PRECISE I want you to generate a sprite of her in idle her hair should be down and the character should not give her back or any other direction than right and front her clothes should look similar to a goth girl rather than similar to rappers give me two directions only to the west and the charterer is moving I DO NOT WANT MULTIPLE DIRECTIONS I WANT JUST ONE DIRECTION WHICH IS WEST AND THE STATE OF THE PLAYER IS IDLE \nHer hair is black and her hair should be loose not tight and her hangs should be a bit above her eyes ",
+        "size": {
+          "width": 32,
+          "height": 32
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "side",
+        "created_at": "2026-09-09T03:01:55.964180+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-09T03:09:02.699404"
+}
