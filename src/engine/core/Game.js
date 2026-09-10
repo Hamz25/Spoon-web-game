@@ -1,57 +1,47 @@
-// src/engine/core/Game.js
 /*
   The Game class is the top-level orchestrator: it owns the canvas, every
-  core system (renderer, camera, input), the currently loaded level, and the
-  Loop that drives it all. This used to live directly in main.js - pulling it
-  in here means main.js's only job becomes "create a Game and start it",
-  and the actual game logic is a reusable class instead of loose top-level
-  code.
+  core system (renderer, camera, input), the Loop that drives it all, and
+  now - the active Scene. This used to also own the player and the level
+  directly, which meant Game couldn't exist without gameplay already
+  running. Pulling that out into PlayScene means Game only has to know
+  "there is a current scene, tell it to update and render" - it doesn't
+  care whether that's a menu, gameplay, or a game-over screen.
 */
 import { Loop } from './Loop.js';
 import { eventBus } from './EventBus.js';
-import Vector2 from './Vector2.js';
 import { InputManager } from '../input/InputManager.js';
 import { Renderer } from '../render/Renderer.js';
 import { Camera } from '../render/Camera.js';
-import { Tileset } from '../render/Tileset.js';
-import { SpriteSheet } from '../animation/SpriteSheet.js';
-import { Animator } from '../animation/Animator.js';
-import { loadImage } from '../assets/AssetLoader.js';
-import { loadLevel } from '../../game/levels/LevelLoader.js';
-import Player from '../../game/entities/Player.js';
-
-// The player sprite frame (24x24) is bigger than its collision box (16x16).
-// Centering it horizontally and bottom-aligning it means the ART lines up
-// with where the HITBOX actually stands on the ground, instead of hanging
-// 8px too low and appearing to sink into the floor. See Player.size for the
-// hitbox dimensions these are measured against.
-const SPRITE_FRAME_SIZE = { width: 24, height: 24 };
+import { MenuScene } from '../../game/scenes/MenuScene.js';
+import { AudioManager } from '../audio/AudioManager.js'
+import { AudioControls } from '../../game/ui/AudioControls.js'
 
 export class Game {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.worldColor = '#8ab3ff'; // sky blue - drawn behind everything each frame
+        this.worldColor = '#8ab3ff'; // sky blue - drawn behind everything each frame, even the menu
 
         this.events = eventBus; // exposed on the instance too, so anything holding a `game`
-                                 // reference (a Scene, later on) can reach the shared bus
+                                 // reference (a Scene, an entity) can reach the shared bus
                                  // without a separate import
 
         this.renderer = new Renderer(this.ctx);
         this.input = new InputManager();
         this.camera = new Camera(canvas.width, canvas.height);
-        this.player = new Player();
+        this.audio = new AudioManager();
 
-        // Respawning teleports the player, but camera.follow()'s easing would otherwise
-        // slowly drift the view back across the level toward the respawn point instead
-        // of cutting there instantly - snapTo bypasses that easing for this one case.
-        // This fires synchronously inside player.update() (before camera.follow() runs
-        // later in the same frame), so by the time follow() runs the camera is already
-        // exactly where it should be and the easing has nothing left to do.
-        this.events.on('playerDied', () => this.camera.snapTo(this.player, this.level.bounds));
+        // NEW - the mute/volume control. Built right here, next to `audio`,
+        // and never touched again by Game itself: same reasoning as
+        // `this.audio` - it needs to exist for the app's whole lifetime,
+        // independent of whichever Scene happens to be active, so it's not
+        // something any individual Scene should own or clean up.
+        this.audioControls = new AudioControls(this.audio);
 
-        this.level = null;   // filled in by init() once level-1.json finishes loading
-        this.tileset = null; // filled in by init() once the tileset image finishes loading
+        // No player, no level, no tileset here anymore - those only make
+        // sense while PlayScene is active, so PlayScene owns them now.
+        // Game just needs to know which scene is currently in charge.
+        this.currentScene = null;
 
         // Bind once here rather than passing arrow functions to `new Loop(...)` in start() -
         // keeps update/render as stable references, which matters if anything ever wants to
@@ -59,37 +49,30 @@ export class Game {
         this.loop = new Loop(this.update.bind(this), this.render.bind(this));
     }
 
-    // Loads everything the game needs before the loop can safely run. Both the
-    // sprite and the level load asynchronously, so nothing in update()/render()
-    // is allowed to run until this fully resolves - that's why start() is a
-    // separate step from init(), rather than kicking off the Loop in here.
+    // The one place scene transitions happen. Deliberately awaits the
+    // incoming scene's enter() BEFORE reassigning `currentScene` - not
+    // after. An earlier version assigned currentScene first and awaited
+    // enter() second, which left a window where the Loop kept ticking
+    // against a scene whose enter() hadn't finished yet (PlayScene
+    // mid-fetch, `this.level` still undefined) - the instant a frame
+    // slipped through that gap, update() crashed reading .tilemap off
+    // undefined. Loading against a scene the loop can't see yet means
+    // that's now impossible: the OLD scene keeps ticking and rendering
+    // for the entire duration of the load, and the swap only happens
+    // once the new scene is fully ready to be updated/rendered.
+    async changeScene(newScene) {
+        const previousScene = this.currentScene;
+        await newScene.enter();
+        if (previousScene) previousScene.exit();
+        this.currentScene = newScene;
+    }
+
+    // Used to load the sprite and level directly and land you in gameplay.
+    // Now it just puts you on the menu - actual loading is deferred until
+    // the player asks for it (clicks Play), which is why this resolves
+    // almost instantly instead of blocking on a fetch.
     async init() {
-        const image = await loadImage('/assets/sprites/player-sprite.png');
-        const frameData = await fetch('/assets/sprites/player-sprite.json').then(r => r.json());
-        const sheet = new SpriteSheet(image, frameData);
-        this.player.animator = new Animator(sheet);
-        this.player.animator.play('idle');
-
-        const tilemapImage = await loadImage('/assets/tiles/tileset.png');
-        this.level = await loadLevel('/assets/levels/level-1.json', {}); // {} = no entity factories yet
-
-        this.tileset = new Tileset(tilemapImage, this.level.tilemap.tileSize);
-
-        this.player.position = new Vector2(this.level.playerStart.x, this.level.playerStart.y);
-
-        // The current respawn point. There's no real checkpoint system yet, so this
-        // just starts (and stays) at the level's playerStart - but Player.js reads
-        // this through `world.respawnPoint` rather than reaching for level.playerStart
-        // directly, so later a Checkpoint entity can simply do
-        // `game.checkpoint = new Vector2(x, y)` (e.g. via an eventBus 'checkpointReached'
-        // listener) and nothing in Player.js has to change.
-        this.checkpoint = new Vector2(this.level.playerStart.x, this.level.playerStart.y);
-
-        // Lets anything listening know setup is done - a menu scene waiting to show
-        // "Press Start", an analytics hook, AudioManager unlocking its context, etc.
-        // Nothing currently subscribes to this, but it costs nothing to emit and
-        // saves a refactor later.
-        this.events.emit('gameReady');
+        await this.changeScene(new MenuScene(this));
     }
 
     // Actually starts the frame loop. Kept separate from init() so callers must
@@ -98,27 +81,18 @@ export class Game {
         this.loop.start();
     }
 
-    // Runs every frame, before render() - advances the simulation by dt seconds.
+    // Runs every frame, before render(). Delegates straight to whatever
+    // scene is active - the `?.` covers the brief instant before the very
+    // first changeScene() call resolves and currentScene is still null.
     update(dt) {
-        this.player.update(dt, {
-            tilemap: this.level.tilemap,
-            bounds: this.level.bounds,
-            respawnPoint: this.checkpoint,
-        }, this.input);
-        this.camera.follow(this.player, this.level.bounds);
+        this.currentScene?.update(dt);
     }
 
     // Runs every frame, after update() - only draws, never changes game state.
+    // The clear happens here, once, so no individual scene has to remember
+    // to paint over the previous frame before drawing its own content.
     render() {
         this.renderer.clear(this.worldColor);
-        this.renderer.renderTilemap(this.level.tilemap, this.tileset, this.camera);
-
-        const offsetX = (SPRITE_FRAME_SIZE.width - this.player.size.width) / 2;
-        const offsetY = SPRITE_FRAME_SIZE.height - this.player.size.height;
-
-        const screenX = Math.round(this.player.position.x - this.camera.x - offsetX);
-        const screenY = Math.round(this.player.position.y - this.camera.y - offsetY);
-
-        this.player.animator.draw(this.ctx, screenX, screenY, this.player.facing === 'right');
+        this.currentScene?.render(this.ctx);
     }
 }

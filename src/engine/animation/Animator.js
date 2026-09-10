@@ -45,4 +45,15 @@ export class Animator {
         const actualFrame = clip.frames[this.frameIndex]; // clip.frames is like [1, 2] - frameIndex points INTO this array, not directly to the sheet's frame index
         this.sheet.drawFrame(ctx, actualFrame, x, y, flipX); // let SpriteSheet handle the actual pixel drawing
     }
+
+    // Returns the {x,y,w,h} frame rect currently showing - lets a caller
+    // (e.g. an entity centering its art over a hitbox that's a different
+    // size than the art) read the CURRENT frame's actual dimensions instead
+    // of assuming every frame in the sheet is the same size. Read-only -
+    // doesn't advance anything, safe to call from render() every frame.
+    getCurrentFrame() {
+        const clip = this.sheet.clips[this.currentClip];
+        const actualFrame = clip.frames[this.frameIndex];
+        return this.sheet.frames[actualFrame];
+    }
 }
