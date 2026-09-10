@@ -1,0 +1,34 @@
+{
+  "frames": [
+    { "x": 0,   "y": 0, "w": 32, "h": 31 },
+    { "x": 32,  "y": 0, "w": 32, "h": 31 },
+    { "x": 64,  "y": 0, "w": 32, "h": 31 },
+    { "x": 96,  "y": 0, "w": 32, "h": 31 },
+    { "x": 128, "y": 0, "w": 32, "h": 31 },
+    { "x": 160, "y": 0, "w": 32, "h": 31 },
+    { "x": 192, "y": 0, "w": 32, "h": 31 },
+    { "x": 224, "y": 0, "w": 32, "h": 31 }
+  ],
+  "clips": {
+    "idle": {
+      "frames": [0, 3],
+      "frameDuration": 0.5,
+      "loop": true
+    },
+    "walking": {
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "frameDuration": 0.1,
+      "loop": true
+    },
+    "run": {
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "frameDuration": 0.07,
+      "loop": true
+    },
+    "jump": {
+      "frames": [0, 4],
+      "frameDuration": 0.1,
+      "loop": false
+    }
+  }
+}

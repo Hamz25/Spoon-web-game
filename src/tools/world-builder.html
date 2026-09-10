@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>World Builder v2</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, Segoe UI, sans-serif; background:#181818; color:#eee; display:flex; flex-direction:column; height:100vh; }
+  header { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:8px 14px; background:#232323; border-bottom:1px solid #383838; }
+  header label { font-size:12px; color:#aaa; display:flex; flex-direction:column; gap:2px; }
+  header input { width:70px; background:#2f2f2f; border:1px solid #444; color:#eee; padding:4px 6px; border-radius:4px; }
+  button { background:#3a3a3a; border:1px solid #4d4d4d; color:#eee; padding:6px 11px; border-radius:5px; cursor:pointer; font-size:12px; }
+  button:hover { background:#484848; }
+  button:disabled { opacity:.35; cursor:default; }
+  button.active { background:#3f6fd1; border-color:#5f8ce8; }
+  .sep { width:1px; align-self:stretch; background:#3a3a3a; margin:0 4px; }
+  main { flex:1; display:flex; overflow:hidden; }
+  #canvasWrap { flex:1; overflow:auto; background:#0d0d0d; position:relative; }
+  #canvas { display:block; cursor:crosshair; image-rendering:pixelated; }
+  aside { width:270px; background:#202020; border-left:1px solid #383838; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:12px; }
+  aside h3 { margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#999; }
+  #palette { display:grid; grid-template-columns: repeat(auto-fill, 30px); gap:3px; max-height:220px; overflow-y:auto; background:#161616; padding:6px; border-radius:6px; }
+  #palette .ptile { width:28px; height:28px; border:2px solid transparent; position:relative; image-rendering:pixelated; cursor:pointer; }
+  #palette .ptile.sel { border-color:#ffd54f; }
+  #palette.picking { outline:2px dashed #ff9d4d; outline-offset:2px; }
+  #palette .ptile canvas { display:block; width:100%; height:100%; image-rendering:pixelated; }
+  .cat-btns { display:flex; gap:6px; }
+  .cat-btns button { flex:1; padding:6px 4px; font-size:11px; }
+  .cat-btns button.g.active { background:#3f8f4f; border-color:#5db774; }
+  .cat-btns button.s.active { background:#8a6a2f; border-color:#c99a4a; }
+  .cat-btns button.h.active { background:#a5342f; border-color:#e0524a; }
+  #typeList, #entityList { font-size:11px; background:#161616; border-radius:6px; padding:6px; max-height:130px; overflow-y:auto; }
+  #typeList div, #entityList .erow { display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px solid #262626; gap:4px; }
+  #typeList div span:first-child { color:#ffd54f; }
+  .erow .info { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .erow button { padding:2px 6px; font-size:11px; }
+  .erow.selected { background:#2a3a52; border-radius:4px; }
+  .hint { font-size:11px; color:#777; margin-top:2px; }
+  #status { font-size:12px; color:#8fbfff; min-height:16px; }
+  .toolgrid { display:flex; flex-wrap:wrap; gap:6px; }
+  .toolgrid button { flex:1 1 auto; }
+  .field { display:flex; flex-direction:column; gap:3px; font-size:11px; color:#aaa; margin-bottom:8px; }
+  .field input, .field select, .field textarea { background:#2f2f2f; border:1px solid #444; color:#eee; padding:5px; border-radius:4px; font-size:12px; font-family:inherit; }
+  .field textarea { resize:vertical; min-height:40px; }
+  .tilepick { display:flex; align-items:center; gap:8px; }
+  .tilepick canvas { width:28px; height:28px; image-rendering:pixelated; border:1px solid #444; border-radius:3px; }
+  .warn { font-size:11px; color:#ffb04d; background:#332a1a; border:1px solid #5a4322; padding:6px; border-radius:5px; margin-top:6px; }
+  .zoomrow { display:flex; align-items:center; gap:6px; }
+  .zoomrow input[type=range] { width:110px; }
+</style>
+</head>
+<body>
+
+<header>
+  <label>Width (tiles)<input type="number" id="widthInput" value="140" min="1"></label>
+  <label>Height (tiles)<input type="number" id="heightInput" value="20" min="1"></label>
+  <button id="newBtn">New / Resize</button>
+  <div class="sep"></div>
+  <button id="importBtn">Import JSON</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none">
+  <button id="exportBtn">Export JSON</button>
+  <div class="sep"></div>
+  <button id="undoBtn" title="Ctrl+Z">Undo</button>
+  <button id="redoBtn" title="Ctrl+Shift+Z">Redo</button>
+  <div class="sep"></div>
+  <button id="copyBtn" title="Ctrl+C" disabled>Copy</button>
+  <button id="pasteBtn" title="Ctrl+V" disabled>Paste</button>
+  <div class="sep"></div>
+  <div class="zoomrow">
+    <span style="font-size:12px;color:#aaa;">Zoom</span>
+    <input type="range" id="zoomRange" min="6" max="32" value="16">
+    <span id="zoomLabel" style="font-size:12px;color:#aaa;">16px</span>
+  </div>
+  <div class="sep"></div>
+  <span id="status"></span>
+</header>
+
+<main>
+  <div id="canvasWrap"><canvas id="canvas"></canvas></div>
+  <aside>
+    <div>
+      <h3>Tools</h3>
+      <div class="toolgrid">
+        <button id="tool-select">Select</button>
+        <button id="tool-paint" class="active">Paint</button>
+        <button id="tool-erase">Erase</button>
+        <button id="tool-start">Set Player Start</button>
+        <button id="tool-entity">Place Entity</button>
+      </div>
+      <div class="hint">Select: click an entity or the P marker to edit/drag it. Drag on empty space to select a rectangle of tiles/entities - Ctrl+C to copy, Ctrl+V to paste. Delete/Backspace removes the selection, Esc clears it.</div>
+    </div>
+
+    <div>
+      <h3>Brush tile</h3>
+      <div id="palette"></div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;">Selected id: <b id="selIdLabel">1</b></div>
+    </div>
+
+    <div>
+      <h3>Category for selected tile</h3>
+      <div class="cat-btns">
+        <button class="g active" data-cat="ground">Ground</button>
+        <button class="s" data-cat="shape">Shape</button>
+        <button class="h" data-cat="hazard">Hazard</button>
+      </div>
+    </div>
+
+    <div>
+      <h3>Tile types used</h3>
+      <div id="typeList"></div>
+    </div>
+
+    <div id="entityPanel">
+      <h3>Entity to place</h3>
+      <div class="field">
+        <label>Kind</label>
+        <select id="entityKind">
+          <option value="cat">Cat</option>
+          <option value="chest">Chest</option>
+          <option value="messageZone">MessageZone</option>
+          <option value="checkpoint">Checkpoint</option>
+          <option value="cake">Cake</option>
+        </select>
+      </div>
+      <div id="entityFields"></div>
+      <button id="applyEditBtn" style="display:none;width:100%;margin-top:4px;">Apply changes to selected entity</button>
+      <h3 style="margin-top:10px;">Entities</h3>
+      <div id="entityList"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+var TILE = 18;          // source pixel size in tileset_packed.png
+var DISP = 16;          // on-screen pixel size per tile (zoomable)
+var PAL_DISP = 28;      // palette swatch size
+var HISTORY_CAP = 200;
+
+var tilesetImg = new Image();
+tilesetImg.src = "data:image/png;base64,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";
+
+// Static preview art for the new "cake" entity - a cropped first frame of
+// cake-sprite.png (the sheet has 4 frames of a candle animation; the editor
+// only ever needs a single still icon to mark where one sits on the map,
+// same idea as the tileset image above but decoded once up front instead of
+// sliced from a sheet since there's only the one icon to show).
+var cakeIconImg = new Image();
+// Re-render once the icon actually decodes, in case it finishes loading
+// after the map's already been drawn once (data: URIs are fast but not
+// synchronous) - otherwise any cake placed before this fires would sit
+// there showing only the fallback square until the next unrelated redraw.
+cakeIconImg.onload = function() { renderAll(); };
+cakeIconImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAnCAYAAABJ0cukAAAFeElEQVR4nO2YW2yURRTHf7Nscbvb+y2ltaVQCkllUYmIhoaLpvHSGvBCiAWRN0mAGC8xUTQ+KEhUvESjiSQESUwxMYZojEYIoVJQAlpJQEmhQq/Qdlu6bXe/YtsdH8532xae7D50wzzszJ45c87M+Z9z5swHCW7BYFAHg0GdKPmeRAme9q2urk7X1dXplp6DuqXnoC4tLU0ICioRQgHC0csawO8JA2AMfcPW/LcB2I+eMr3T3oUSgkDYaNWhoSYAin0pAFxfvxtVdDsANef+AeBYY+P/1j/tEfBOpbCamhoNkJaSRkbeaiGaNh5fchw7ik0EpqIlxIVGBn/QYx8dj9MQa+8g44v9CqCqqkoDNN5yoUSm0cce0IDtNrGOTj5sagbgrVtp1GkJQ2Cjafym4EIAwuEh2tpap1zftEcg4U2BVk4oJEL+zdu6NU9IICpQFquWvbjD0Bq6dzmJpicTlUuGnkDTKJtYUbkAgB0735m032nvQjdEYPtrr2qA2rUFAAT8BSg9PolPq4nLHZSiRsgaioxA3k0dKWqE8PtFVyTaDUCncYHoTKmjPt4sl+LDD1UDsGPHLltx8iBw9GiDPvTzTwDUPrJYiGntAMzqqGSoohdw+b7Lp5W2SJY9YkSjveZImNL8ua4YkEEgNR+AyEiPTYsYsq6ovZKukr8AyP5D+J55ZQsA1Zu38Pr2NwDwGkZU6pJDh7Ewzs0S6NqGRFj+7BgX+89NPDM5DQXOYXACsG9lj03LNXnG6aNvZXecjICRb8uyDmC5ZXh+D9oQISPdpvFc1hseHgaSwIW877+3G4AzPx5me7WUwCV9fQCcH+sBQHe14jvlA2BmIADA1WXnybok56/YKFY+EZMyeab2k3PUtHz3IABKOz4X8InlLdfoX9xL9LqJjmnlq1d/49vn/wagPD0NgD0vvwnAvr2fUbBzF5AMCMydOweAUEkJp8/LiUuv5wEwuiICwNZ369l36hgAHjtTaopSMwCoPV4OQGR0VCYVpHkljgJm321EOFsvyN5fMAuAVYUlsu7LMSJjsrbA5wfgu44Wvmo+C8CmWpFR+fgqAA58MMDT69bJAdZv2GBHpVKST569/DkAT84WmF5atIQNFXcAcKRTMlNXZJC5mZkAFJpKX/hEXGjb5jzbQj2GAcDlwUH+7BU3OdcnQZk6Qx6EC7Pzqd72KwBn9jwIQLo3haKAyK+6818x6ECj6Csupv7A1wqSwYXcf9Iz0mVgBtLwmU0AqLEBZhauBcCTHjRZtJ3/PT752mDl0X2n21Gp4h6jnQcAiEXOEhtpA2C8X25Wb1YhADPSgmh9NwBln4qoshOHMQ6K5UsKxIWs9Vpn2HtOLgSsplKLAbjN95SLalahZq+0U9pob7YMxq9NZMebUwXIjawDgl5KXk2cPh1td92PsjA8rO3xYET66LDUV0olLwIqrrduboWW+hzXiZXDZ5UQMaNT1gEeGzEcWTpusXm5mWWVXU/JXHuvnlQqt3XHTCanrI07wGB2OJ7B3JnWCkYkfcasXcgrR4a+Ymub8httwy6+b/Ta0ZNJNrvJ/+hSLzVLZXv+9Ly4BZlZ2TZ/krmQ+dFg0b1m8NoIOLaalSsp7Ur/KB6TftcCqY+uhEZtvqK8FHMkMn5vjjh6dNwUV0KjDskchKPuB9RQ3DZXLC+1x0mGgGnRF5dbdbr8v6dmDa0njwAwe81zMqOg/+T3AAw0yxc3VSYmzVl2H+kLxEqX9tYDsLos1Q6HscyAKd2BItolVWtvl5QZ9U0eQsMyP6dI7By6lgIo5s8rp+GXBnPlDdq8inINDpzxnxQsnc5FYD1ClMvVtJ2hXEHvmiXun5p0D0gXn+WsqQsXW5LnTfwfXv75ZTwiwIYAAAAASUVORK5CYII=";
+
+var cols, rows; // tileset grid dimensions (in tiles)
+
+var state = {
+  width: 140,
+  height: 20,
+  tileSize: TILE,
+  tiles: [],
+  tileTypes: { "0": "empty" },
+  entities: [],
+  playerStart: { x: 0, y: 0 }
+};
+
+var selectedTileId = 1;
+var selectedCategory = 'ground';
+var currentTool = 'paint';
+var isPainting = false;
+var strokeChanges = null; // Map "col,row" -> {col,row,prevId,newId}
+
+var undoStack = [];
+var redoStack = [];
+
+var editingIndex = null;
+var chestForm = { message: "You found a little surprise!", grantsItem: "", grantsItemCount: 1, closedTileId: 10, openTileId: 12 };
+var messageZoneForm = { message: "", width: 32, height: 32 };
+// The cake: an interactable prop, same idea as Chest (she has to be
+// standing near it and press a key), except pressing that key doesn't
+// grant an inventory item - it directly spawns `fireworkCount` Firework
+// entities in one go, matching the "already has a bunch of invisible
+// fireworks that get set off" ask. "Invisible" is a property of the
+// Firework instances it spawns (no riseImage/explodeAnimator assigned),
+// not something this editor draws differently - the marker below always
+// shows the real cake art so it's easy to find on the map.
+var cakeForm = { fireworkCount: 6, triggerKey: 'interact', fireworkSpread: 40, fireworkDelay: 300, fireworkRange: 160 };
+var pickingFor = null; // 'closed' | 'open' | null - chest tile-id picking mode
+
+// Known runtime item ids a Chest can hand out via its `grantsItem` field.
+// This is NOT a placeable entity - Firework.js is only ever spawned at
+// runtime by PlayScene from an inventory item (see its comment header), so
+// it never appears in entityKind/buildEntityFromForm. It lives here purely
+// as a real, known value for the Chest form's "Grants item" dropdown,
+// instead of leaving that field free-text and hoping for no typos between
+// the level JSON and whatever string PlayScene checks for. Add future
+// grantable items here (one entry each) rather than hardcoding a new
+// dropdown - "Custom..." below still covers anything not listed yet.
+var GRANTABLE_ITEMS = [
+  { value: 'firework', label: 'Firework (Firework.js)' }
+];
+
+// ---------- Selection (click an entity or the player-start marker to
+// edit/drag it, instead of only ever going through the sidebar list) ----------
+var selectedEntityIndex = null;   // index into state.entities, or null
+var selectedIsPlayerStart = false;
+var dragging = null; // { kind: 'entity'|'playerStart', index, startX, startY (world px) } while a drag is in progress
+
+// ---------- Region select + copy/paste ----------
+// A rectangular selection (in tile coordinates) you can drag out with the
+// Select tool, see highlighted on the canvas, and copy - independent of the
+// single-entity selection above (picking an entity clears the region, and
+// vice versa, so it's always obvious which kind of selection is active).
+var regionSelection = null;  // { c0, r0, c1, r1 } inclusive tile coords, normalized so c0<=c1 and r0<=r1
+var marqueeStart = null;     // {col,row} anchor cell while a NEW region drag is in progress
+var marqueeCur = null;       // {col,row} current cell of that same in-progress drag
+var clipboard = null;        // { w, h, tiles: [id,...], entities: [{...fields, dx, dy}] } - dx/dy are offsets from the copied region's top-left corner, in world px
+var isPasting = false;       // true from Ctrl+V / the Paste button until the next click commits it (or Esc cancels)
+var pastePreviewCell = null; // {col,row} last cell under the cursor while isPasting, so the ghost preview can follow the mouse
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+function idx(col, row) { return row * state.width + col; }
+
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+  clearTimeout(setStatus._t);
+  setStatus._t = setTimeout(function() { document.getElementById('status').textContent = ''; }, 2500);
+}
+
+// ---------- Undo / Redo ----------
+function pushAction(action) {
+  undoStack.push(action);
+  if (undoStack.length > HISTORY_CAP) undoStack.shift();
+  redoStack.length = 0;
+  updateUndoRedoButtons();
+}
+function undo() {
+  if (!undoStack.length) return;
+  var action = undoStack.pop();
+  action.undo();
+  redoStack.push(action);
+  updateUndoRedoButtons();
+}
+function redo() {
+  if (!redoStack.length) return;
+  var action = redoStack.pop();
+  action.do();
+  undoStack.push(action);
+  updateUndoRedoButtons();
+}
+function clearHistory() {
+  undoStack = [];
+  redoStack = [];
+  updateUndoRedoButtons();
+}
+function updateUndoRedoButtons() {
+  document.getElementById('undoBtn').disabled = undoStack.length === 0;
+  document.getElementById('redoBtn').disabled = redoStack.length === 0;
+}
+
+// ---------- Map lifecycle ----------
+function newMap(width, height) {
+  state.width = width;
+  state.height = height;
+  state.tiles = new Array(width * height).fill(0);
+  state.tileTypes = { "0": "empty" };
+  state.entities = [];
+  state.playerStart = { x: 0, y: 0 };
+  clearHistory();
+  selectedEntityIndex = null;
+  selectedIsPlayerStart = false;
+  editingIndex = null;
+  regionSelection = null;
+  marqueeStart = null;
+  marqueeCur = null;
+  isPasting = false;
+  pastePreviewCell = null;
+  updateClipboardButtons(); // clipboard itself is left intact - a copied section stays pasteable into a brand new map
+  document.getElementById('applyEditBtn').style.display = 'none';
+  resizeCanvas();
+  renderAll();
+  renderTypeList();
+  renderEntityList();
+  setStatus('New ' + width + 'x' + height + ' map created.');
+}
+
+function resizeCanvas() {
+  canvas.width = state.width * DISP;
+  canvas.height = state.height * DISP;
+}
+
+// ---------- Palette ----------
+function buildPalette() {
+  var pal = document.getElementById('palette');
+  pal.innerHTML = '';
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      (function(r, c) {
+        var id = r * cols + c + 1;
+        var wrap = document.createElement('div');
+        wrap.className = 'ptile' + (id === selectedTileId ? ' sel' : '');
+        wrap.dataset.id = id;
+        var cv = document.createElement('canvas');
+        cv.width = PAL_DISP; cv.height = PAL_DISP;
+        var cctx = cv.getContext('2d');
+        cctx.imageSmoothingEnabled = false;
+        cctx.drawImage(tilesetImg, c*TILE, r*TILE, TILE, TILE, 0, 0, PAL_DISP, PAL_DISP);
+        wrap.appendChild(cv);
+        wrap.title = 'id ' + id;
+        wrap.addEventListener('click', function() { onPaletteClick(id, wrap); });
+        pal.appendChild(wrap);
+      })(r, c);
+    }
+  }
+}
+
+function onPaletteClick(id, wrapEl) {
+  if (pickingFor === 'closed') {
+    chestForm.closedTileId = id;
+    pickingFor = null;
+    document.getElementById('palette').classList.remove('picking');
+    renderEntityFields();
+    return;
+  }
+  if (pickingFor === 'open') {
+    chestForm.openTileId = id;
+    pickingFor = null;
+    document.getElementById('palette').classList.remove('picking');
+    renderEntityFields();
+    return;
+  }
+  selectedTileId = id;
+  document.getElementById('selIdLabel').textContent = id;
+  document.querySelectorAll('#palette .ptile').forEach(function(el) { el.classList.remove('sel'); });
+  wrapEl.classList.add('sel');
+  selectTool('paint'); // picking a brush tile means you're about to paint with it - jump straight to the Paint tool instead of making you click it separately
+  var existing = state.tileTypes[String(id)];
+  if (existing) {
+    selectedCategory = existing;
+    document.querySelectorAll('.cat-btns button').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.cat === existing);
+    });
+  }
+}
+
+// ---------- Rendering ----------
+function renderAll() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (var row = 0; row < state.height; row++) {
+    for (var col = 0; col < state.width; col++) {
+      var id = state.tiles[idx(col, row)];
+      if (id === 0) continue;
+      var srcIndex = id - 1;
+      var sc = srcIndex % cols;
+      var sr = Math.floor(srcIndex / cols);
+      ctx.drawImage(tilesetImg, sc*TILE, sr*TILE, TILE, TILE, col*DISP, row*DISP, DISP, DISP);
+    }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  for (var c = 0; c <= state.width; c++) { ctx.beginPath(); ctx.moveTo(c*DISP,0); ctx.lineTo(c*DISP, canvas.height); ctx.stroke(); }
+  for (var rr = 0; rr <= state.height; rr++) { ctx.beginPath(); ctx.moveTo(0, rr*DISP); ctx.lineTo(canvas.width, rr*DISP); ctx.stroke(); }
+
+  // player start marker
+  var psCol = Math.floor(state.playerStart.x / state.tileSize);
+  var psRow = Math.floor(state.playerStart.y / state.tileSize);
+  ctx.strokeStyle = '#4dff88';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(psCol*DISP+1, psRow*DISP+1, DISP-2, DISP-2);
+  ctx.fillStyle = '#4dff88';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('P', psCol*DISP+3, psRow*DISP+DISP-4);
+  if (selectedIsPlayerStart) drawSelectionOutline(psCol*DISP, psRow*DISP, DISP, DISP);
+
+  // entity markers
+  var pxScale = DISP / state.tileSize;
+  state.entities.forEach(function(e, i) {
+    var ex = e.x * pxScale;
+    var ey = e.y * pxScale;
+    if (e.type === 'messageZone') {
+      var w = (e.width || 32) * pxScale;
+      var h = (e.height || 32) * pxScale;
+      ctx.fillStyle = 'rgba(80,150,255,0.25)';
+      ctx.fillRect(ex, ey, w, h);
+      ctx.strokeStyle = '#5096ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ex, ey, w, h);
+      if (selectedEntityIndex === i) drawSelectionOutline(ex, ey, w, h);
+    } else if (e.type === 'cake') {
+      // Drawn bigger than one tile (the real cake art is much wider/taller
+      // than a 16x16 hitbox) so it actually reads as a cake on the map
+      // instead of a tiny sliver - anchored so (ex,ey), the entity's real
+      // world position, sits at the BOTTOM-LEFT of the drawn icon, same
+      // "position is her feet/base, art can be bigger" convention Firework
+      // and the player sprite already use elsewhere in this codebase.
+      var cakeW = DISP * 2;
+      var cakeH = DISP * 2;
+      if (cakeIconImg.complete && cakeIconImg.naturalWidth > 0) {
+        ctx.drawImage(cakeIconImg, ex, ey - (cakeH - DISP), cakeW, cakeH);
+      } else {
+        // Icon hasn't decoded yet (or failed) - same colored-square-plus-
+        // letter fallback every other point entity uses, so the marker is
+        // never just blank while cakeIconImg.onload catches up.
+        ctx.strokeStyle = '#ff8fd6';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ex + 1, ey + 1, DISP - 2, DISP - 2);
+        ctx.fillStyle = '#ff8fd6';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('K', ex + 3, ey + DISP - 4);
+      }
+      if (selectedEntityIndex === i) drawSelectionOutline(ex, ey - (cakeH - DISP), cakeW, cakeH);
+    } else {
+      var color = e.type === 'cat' ? '#ffa64d' : e.type === 'chest' ? '#ffd54f' : e.type === 'checkpoint' ? '#c07dff' : '#ff5df0';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ex+1, ey+1, DISP-2, DISP-2);
+      ctx.fillStyle = color;
+      ctx.font = 'bold 9px sans-serif';
+      var letter = e.type === 'cat' ? 'C' : e.type === 'chest' ? '$' : e.type === 'checkpoint' ? '!' : '?';
+      ctx.fillText(letter, ex+3, ey+DISP-4);
+      // small badge on a chest that hands out an item (e.g. the firework
+      // from Firework.js) - a quiet visual cue so you don't have to open
+      // every chest's fields to know which one is the "special" one.
+      if (e.type === 'chest' && e.grantsItem) {
+        ctx.fillStyle = '#ff5df0';
+        ctx.beginPath();
+        ctx.arc(ex + DISP - 3, ey + 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (selectedEntityIndex === i) drawSelectionOutline(ex, ey, DISP, DISP);
+    }
+  });
+
+  // ---- Region select (marquee-in-progress, the persisted selection) and
+  // paste-preview overlays, drawn last so they sit on top of everything else ----
+  if (marqueeStart && marqueeCur) {
+    drawRegionOverlay(normalizeRegion(marqueeStart, marqueeCur), 'rgba(255,213,79,0.18)', '#ffd54f', false);
+  }
+  if (regionSelection && !marqueeStart) {
+    drawRegionOverlay(regionSelection, 'rgba(93,223,255,0.15)', '#5ddfff', true);
+    var rw = regionSelection.c1 - regionSelection.c0 + 1;
+    var rh = regionSelection.r1 - regionSelection.r0 + 1;
+    var labelX = regionSelection.c0 * DISP + 3;
+    var labelY = regionSelection.r0 * DISP - 4;
+    if (labelY < 10) labelY = regionSelection.r0 * DISP + 12; // flip below the box if there's no room above it (near the top edge)
+    ctx.fillStyle = '#5ddfff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText(rw + 'x' + rh, labelX, labelY);
+  }
+  if (isPasting && pastePreviewCell && clipboard) {
+    drawPastePreview(pastePreviewCell.col, pastePreviewCell.row);
+  }
+}
+
+// Translucent fill + border over a tile-coordinate region - shared by both
+// the live marquee drag and the persisted region selection so "what you're
+// dragging" and "what you've got selected" read as the same kind of thing,
+// just one settled and one still in motion.
+function drawRegionOverlay(region, fillStyle, strokeStyle, dashed) {
+  var x = region.c0 * DISP, y = region.r0 * DISP;
+  var w = (region.c1 - region.c0 + 1) * DISP;
+  var h = (region.r1 - region.r0 + 1) * DISP;
+  ctx.save();
+  ctx.fillStyle = fillStyle;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = 2;
+  if (dashed) ctx.setLineDash([5, 3]);
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.restore();
+}
+
+// Ghost preview of the clipboard's tiles, following the cursor while a paste
+// is armed - lets you see exactly where it'll land before you click.
+function drawPastePreview(col, row) {
+  var x = col * DISP, y = row * DISP;
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  for (var r = 0; r < clipboard.h; r++) {
+    for (var c = 0; c < clipboard.w; c++) {
+      var id = clipboard.tiles[r * clipboard.w + c];
+      if (id === 0) continue;
+      var srcIndex = id - 1;
+      var sc = srcIndex % cols;
+      var sr = Math.floor(srcIndex / cols);
+      ctx.drawImage(tilesetImg, sc*TILE, sr*TILE, TILE, TILE, x + c*DISP, y + r*DISP, DISP, DISP);
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(x + 1, y + 1, clipboard.w*DISP - 2, clipboard.h*DISP - 2);
+  ctx.restore();
+}
+
+// Dashed white outline drawn over whatever's currently selected, on top of
+// its normal marker - kept as one shared helper so entities, messageZones,
+// and the player-start marker all get the same "you're selected" look.
+function drawSelectionOutline(x, y, w, h) {
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+  ctx.restore();
+}
+
+function renderTypeList() {
+  var box = document.getElementById('typeList');
+  box.innerHTML = '';
+  Object.keys(state.tileTypes).forEach(function(key) {
+    if (key === '0') return;
+    var row = document.createElement('div');
+    row.innerHTML = '<span>id ' + key + '</span><span>' + state.tileTypes[key] + '</span>';
+    box.appendChild(row);
+  });
+}
+
+function entitySummary(e) {
+  if (e.type === 'chest') {
+    var base = 'chest: "' + (e.message||'').slice(0,18) + '"';
+    return e.grantsItem ? base + ' → grants: ' + e.grantsItem + ((e.grantsItemCount && e.grantsItemCount > 1) ? ' x' + e.grantsItemCount : '') : base;
+  }
+  if (e.type === 'messageZone') return 'msg: "' + (e.message||'').slice(0,18) + '"';
+  if (e.type === 'cake') return 'cake: looping ±' + (e.fireworkRange ?? 160) + 'px (' + (e.triggerKey||'interact') + ')';
+  return e.type;
+}
+
+function renderEntityList() {
+  var box = document.getElementById('entityList');
+  box.innerHTML = '';
+  state.entities.forEach(function(e, i) {
+    var row = document.createElement('div');
+    row.className = 'erow' + (selectedEntityIndex === i ? ' selected' : '');
+    var label = document.createElement('span');
+    label.className = 'info';
+    label.textContent = entitySummary(e) + ' (' + e.x + ',' + e.y + ')';
+    label.addEventListener('click', function() { selectEntity(i); });
+    var editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', function() { startEditEntity(i); });
+    var del = document.createElement('button');
+    del.textContent = '✕';
+    del.addEventListener('click', function() { deleteEntity(i); });
+    row.appendChild(label);
+    row.appendChild(editBtn);
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+// ---------- Entity fields UI ----------
+function renderEntityFields() {
+  var kind = document.getElementById('entityKind').value;
+  var container = document.getElementById('entityFields');
+  container.innerHTML = '';
+
+  if (kind === 'cat') {
+    var note = document.createElement('div');
+    note.style.fontSize = '11px';
+    note.style.color = '#888';
+    note.textContent = 'No extra fields - just position.';
+    container.appendChild(note);
+  }
+
+  if (kind === 'chest') {
+    container.appendChild(makeTextField('Message', chestForm.message, function(v) { chestForm.message = v; }, true));
+    container.appendChild(makeGrantsItemField());
+    container.appendChild(makeNumberField('Grants quantity', chestForm.grantsItemCount, function(v) { chestForm.grantsItemCount = Math.max(1, v || 1); }));
+    container.appendChild(makeTilePickField('Closed tile', chestForm.closedTileId, 'closed'));
+    container.appendChild(makeTilePickField('Open tile', chestForm.openTileId, 'open'));
+  }
+
+  if (kind === 'messageZone') {
+    container.appendChild(makeTextField('Message', messageZoneForm.message, function(v) { messageZoneForm.message = v; }, true));
+    container.appendChild(makeNumberField('Width', messageZoneForm.width, function(v) { messageZoneForm.width = v; }));
+    container.appendChild(makeNumberField('Height', messageZoneForm.height, function(v) { messageZoneForm.height = v; }));
+  }
+
+  if (kind === 'checkpoint') {
+    var warn = document.createElement('div');
+    warn.className = 'warn';
+    warn.textContent = 'No checkpoint system exists in the engine yet. This just places inert data ({ type: "checkpoint", x, y }) for later.';
+    container.appendChild(warn);
+  }
+
+  if (kind === 'cake') {
+    container.appendChild(makeNumberField('Firework count (unused - see note)', cakeForm.fireworkCount, function(v) { cakeForm.fireworkCount = v; }));
+    container.appendChild(makeTextField('Trigger key', cakeForm.triggerKey, function(v) { cakeForm.triggerKey = v; }));
+    container.appendChild(makeNumberField('Firework spread (px per step)', cakeForm.fireworkSpread, function(v) { cakeForm.fireworkSpread = v; }));
+    container.appendChild(makeNumberField('Firework delay (ms per step)', cakeForm.fireworkDelay, function(v) { cakeForm.fireworkDelay = v; }));
+    container.appendChild(makeNumberField('Firework range (max px from cake)', cakeForm.fireworkRange, function(v) { cakeForm.fireworkRange = Math.max(0, v || 0); }));
+    var note = document.createElement('div');
+    note.style.fontSize = '11px';
+    note.style.color = '#888';
+    note.textContent = 'Once lit, the cake fires one rocket every "delay" ms from a point that sweeps back and forth, moving "spread" px per step, never going further than +-"range" px from the cake before reversing (a scanning-bar loop that never stops). "Firework count" is kept for older level files but is no longer used. Cake.js defaults to 40px/300ms/160px if these are left blank on an older level file.';
+    container.appendChild(note);
+    var warn = document.createElement('div');
+    warn.className = 'warn';
+    warn.textContent = '"Trigger key" must match a real key name registered in InputManager for it to do anything in-game.';
+    container.appendChild(warn);
+  }
+}
+
+function makeTextField(labelText, value, onChange, multiline) {
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = labelText;
+  var input = document.createElement(multiline ? 'textarea' : 'input');
+  if (!multiline) input.type = 'text';
+  input.value = value || '';
+  input.addEventListener('input', function() { onChange(input.value); });
+  wrap.appendChild(label);
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function makeNumberField(labelText, value, onChange) {
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = labelText;
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.value = value;
+  input.addEventListener('input', function() { onChange(parseInt(input.value, 10) || 0); });
+  wrap.appendChild(label);
+  wrap.appendChild(input);
+  return wrap;
+}
+
+// Chest's "Grants item" field - a dropdown of known runtime items
+// (GRANTABLE_ITEMS, e.g. Firework.js's 'firework') instead of free text,
+// so this can't drift out of sync with whatever string PlayScene actually
+// checks for. "Custom..." keeps it extensible for an item id that isn't
+// registered yet, without blocking on a code change here first.
+function makeGrantsItemField() {
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = 'Grants item (optional)';
+  var select = document.createElement('select');
+
+  var noneOpt = document.createElement('option');
+  noneOpt.value = '';
+  noneOpt.textContent = '— None —';
+  select.appendChild(noneOpt);
+
+  GRANTABLE_ITEMS.forEach(function(item) {
+    var opt = document.createElement('option');
+    opt.value = item.value;
+    opt.textContent = item.label;
+    select.appendChild(opt);
+  });
+
+  var customOpt = document.createElement('option');
+  customOpt.value = '__custom__';
+  customOpt.textContent = 'Custom...';
+  select.appendChild(customOpt);
+
+  var knownValues = GRANTABLE_ITEMS.map(function(item) { return item.value; });
+  var isKnownOrEmpty = chestForm.grantsItem === '' || knownValues.indexOf(chestForm.grantsItem) !== -1;
+  select.value = isKnownOrEmpty ? chestForm.grantsItem : '__custom__';
+
+  var customInput = document.createElement('input');
+  customInput.type = 'text';
+  customInput.placeholder = 'custom item id';
+  customInput.style.marginTop = '4px';
+  customInput.value = isKnownOrEmpty ? '' : chestForm.grantsItem;
+  customInput.style.display = select.value === '__custom__' ? 'block' : 'none';
+  customInput.addEventListener('input', function() { chestForm.grantsItem = customInput.value; });
+
+  select.addEventListener('change', function() {
+    if (select.value === '__custom__') {
+      customInput.style.display = 'block';
+      chestForm.grantsItem = customInput.value;
+    } else {
+      customInput.style.display = 'none';
+      chestForm.grantsItem = select.value;
+    }
+  });
+
+  wrap.appendChild(label);
+  wrap.appendChild(select);
+  wrap.appendChild(customInput);
+  return wrap;
+}
+
+function makeTilePickField(labelText, tileId, which) {
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  var label = document.createElement('label');
+  label.textContent = labelText + ' (id ' + tileId + ')';
+  var row = document.createElement('div');
+  row.className = 'tilepick';
+  var preview = document.createElement('canvas');
+  preview.width = PAL_DISP; preview.height = PAL_DISP;
+  drawTilePreview(preview, tileId);
+  var btn = document.createElement('button');
+  btn.textContent = 'Pick from palette';
+  btn.addEventListener('click', function() {
+    pickingFor = which;
+    document.getElementById('palette').classList.add('picking');
+    setStatus('Click a tile in the palette to use as the ' + which + ' chest tile.');
+  });
+  row.appendChild(preview);
+  row.appendChild(btn);
+  wrap.appendChild(label);
+  wrap.appendChild(row);
+  return wrap;
+}
+
+function drawTilePreview(canvasEl, tileId) {
+  var cctx = canvasEl.getContext('2d');
+  cctx.imageSmoothingEnabled = false;
+  cctx.clearRect(0,0,canvasEl.width, canvasEl.height);
+  var index = tileId - 1;
+  var sc = index % cols;
+  var sr = Math.floor(index / cols);
+  cctx.drawImage(tilesetImg, sc*TILE, sr*TILE, TILE, TILE, 0, 0, canvasEl.width, canvasEl.height);
+}
+
+document.getElementById('entityKind').addEventListener('change', renderEntityFields);
+
+// ---------- Entity CRUD (undoable) ----------
+function buildEntityFromForm(kind, x, y) {
+  if (kind === 'cat') return { type: 'cat', x: x, y: y };
+  if (kind === 'chest') return {
+    type: 'chest', x: x, y: y,
+    message: chestForm.message, grantsItem: chestForm.grantsItem || null,
+    grantsItemCount: chestForm.grantsItemCount || 1,
+    closedTileId: chestForm.closedTileId, openTileId: chestForm.openTileId
+  };
+  if (kind === 'messageZone') return {
+    type: 'messageZone', x: x, y: y,
+    message: messageZoneForm.message, width: messageZoneForm.width, height: messageZoneForm.height
+  };
+  if (kind === 'checkpoint') return { type: 'checkpoint', x: x, y: y };
+  if (kind === 'cake') return {
+    type: 'cake', x: x, y: y,
+    fireworkCount: cakeForm.fireworkCount, triggerKey: cakeForm.triggerKey || 'interact',
+    fireworkSpread: cakeForm.fireworkSpread, fireworkDelay: cakeForm.fireworkDelay,
+    fireworkRange: cakeForm.fireworkRange
+  };
+  return { type: kind, x: x, y: y };
+}
+
+function addEntity(entity) {
+  var index = state.entities.length;
+  state.entities.push(entity);
+  pushAction({
+    do: function() { state.entities.splice(index, 0, entity); renderEntityList(); renderAll(); },
+    undo: function() { state.entities.splice(index, 1); renderEntityList(); renderAll(); }
+  });
+  renderEntityList();
+  renderAll();
+}
+
+function deleteEntity(i) {
+  var entity = state.entities[i];
+  state.entities.splice(i, 1);
+  pushAction({
+    do: function() { state.entities.splice(i, 1); renderEntityList(); renderAll(); },
+    undo: function() { state.entities.splice(i, 0, entity); renderEntityList(); renderAll(); }
+  });
+  if (editingIndex === i) { editingIndex = null; document.getElementById('applyEditBtn').style.display = 'none'; }
+  // Keep the selection pointed at the same entity (or clear it) rather than
+  // silently drifting onto whatever shifted into slot i after the splice.
+  if (selectedEntityIndex === i) selectedEntityIndex = null;
+  else if (selectedEntityIndex !== null && selectedEntityIndex > i) selectedEntityIndex--;
+  renderEntityList();
+  renderAll();
+}
+
+function startEditEntity(i) {
+  var e = state.entities[i];
+  editingIndex = i;
+  selectEntity(i); // also select/highlight it, on canvas and in the list
+  document.getElementById('entityKind').value = e.type;
+  if (e.type === 'chest') {
+    chestForm.message = e.message; chestForm.grantsItem = e.grantsItem || '';
+    chestForm.grantsItemCount = e.grantsItemCount ?? 1;
+    chestForm.closedTileId = e.closedTileId; chestForm.openTileId = e.openTileId;
+  } else if (e.type === 'messageZone') {
+    messageZoneForm.message = e.message; messageZoneForm.width = e.width; messageZoneForm.height = e.height;
+  } else if (e.type === 'cake') {
+    cakeForm.fireworkCount = e.fireworkCount; cakeForm.triggerKey = e.triggerKey;
+    cakeForm.fireworkSpread = e.fireworkSpread ?? 40; cakeForm.fireworkDelay = e.fireworkDelay ?? 300;
+    cakeForm.fireworkRange = e.fireworkRange ?? 160;
+  }
+  renderEntityFields();
+  document.getElementById('applyEditBtn').style.display = 'block';
+  setStatus('Editing entity #' + i + ' - adjust fields, then click "Apply changes".');
+}
+
+// ---------- Selection (canvas click-to-select + drag-to-move) ----------
+function selectEntity(i) {
+  selectedEntityIndex = i;
+  selectedIsPlayerStart = false;
+  regionSelection = null;
+  updateClipboardButtons();
+  renderEntityList();
+  renderAll();
+}
+
+function selectPlayerStart() {
+  selectedEntityIndex = null;
+  selectedIsPlayerStart = true;
+  editingIndex = null;
+  regionSelection = null;
+  updateClipboardButtons();
+  document.getElementById('applyEditBtn').style.display = 'none';
+  renderEntityList();
+  renderAll();
+  setStatus('Player start selected - drag it to move, or use "Set Player Start" tool to place it elsewhere.');
+}
+
+function clearSelection() {
+  selectedEntityIndex = null;
+  selectedIsPlayerStart = false;
+  editingIndex = null;
+  regionSelection = null;
+  document.getElementById('applyEditBtn').style.display = 'none';
+  updateClipboardButtons();
+  renderEntityList();
+  renderAll();
+}
+
+function updateClipboardButtons() {
+  document.getElementById('copyBtn').disabled = !regionSelection;
+  document.getElementById('pasteBtn').disabled = !clipboard;
+}
+
+// World-pixel bounding box for an entity, matching how renderAll() draws it
+// (a tileSize x tileSize box for most entities, or its own width/height for
+// a messageZone, since that one's a trigger area rather than a sprite).
+function entityBoxWorld(e) {
+  var w = e.type === 'messageZone' ? (e.width || 32) : state.tileSize;
+  var h = e.type === 'messageZone' ? (e.height || 32) : state.tileSize;
+  return { x: e.x, y: e.y, w: w, h: h };
+}
+function playerStartBoxWorld() {
+  return { x: state.playerStart.x, y: state.playerStart.y, w: state.tileSize, h: state.tileSize };
+}
+function pointInBox(px, py, box) {
+  return px >= box.x && px < box.x + box.w && py >= box.y && py < box.y + box.h;
+}
+
+// Hit-test in WORLD pixel coordinates (already divided out of screen/DISP
+// space by the caller) - checks entities topmost-first (last placed draws
+// on top in renderAll, so search back-to-front to match what the user
+// actually sees), then falls back to the player-start marker.
+function hitTestAt(worldX, worldY) {
+  for (var i = state.entities.length - 1; i >= 0; i--) {
+    if (pointInBox(worldX, worldY, entityBoxWorld(state.entities[i]))) {
+      return { kind: 'entity', index: i };
+    }
+  }
+  if (pointInBox(worldX, worldY, playerStartBoxWorld())) {
+    return { kind: 'playerStart' };
+  }
+  return null;
+}
+
+// Turns two drag-endpoint cells into a normalized {c0,r0,c1,r1} box (both
+// ends inclusive) regardless of which corner the user actually dragged from.
+function normalizeRegion(a, b) {
+  return {
+    c0: Math.min(a.col, b.col),
+    r0: Math.min(a.row, b.row),
+    c1: Math.max(a.col, b.col),
+    r1: Math.max(a.row, b.row)
+  };
+}
+
+// ---------- Copy / paste ----------
+function copySelection() {
+  if (!regionSelection) { setStatus('Nothing selected to copy - drag a box on empty space with the Select tool first.'); return; }
+  var r = regionSelection;
+  var w = r.c1 - r.c0 + 1;
+  var h = r.r1 - r.r0 + 1;
+  var tiles = new Array(w * h);
+  for (var row = 0; row < h; row++) {
+    for (var col = 0; col < w; col++) {
+      tiles[row * w + col] = state.tiles[idx(r.c0 + col, r.r0 + row)];
+    }
+  }
+  var originX = r.c0 * state.tileSize;
+  var originY = r.r0 * state.tileSize;
+  // An entity counts as "in" the region if ITS OWN origin point falls
+  // inside it - simplest rule that matches how entities are placed (always
+  // tile-snapped). A messageZone whose box extends past the region's edge
+  // still copies whole, just anchored by its top-left corner like everything
+  // else - it doesn't get clipped to the box.
+  var entities = [];
+  state.entities.forEach(function(e) {
+    var ec = Math.floor(e.x / state.tileSize);
+    var er = Math.floor(e.y / state.tileSize);
+    if (ec < r.c0 || ec > r.c1 || er < r.r0 || er > r.r1) return;
+    var clone = JSON.parse(JSON.stringify(e));
+    clone.dx = e.x - originX;
+    clone.dy = e.y - originY;
+    delete clone.x;
+    delete clone.y;
+    entities.push(clone);
+  });
+  clipboard = { w: w, h: h, tiles: tiles, entities: entities };
+  updateClipboardButtons();
+  setStatus('Copied ' + w + 'x' + h + ' tiles' +
+    (entities.length ? ' + ' + entities.length + ' ' + (entities.length === 1 ? 'entity' : 'entities') : '') +
+    ' - Ctrl+V to paste.');
+}
+
+function beginPaste() {
+  if (!clipboard) { setStatus('Nothing copied yet - select a region and press Ctrl+C first.'); return; }
+  isPasting = true;
+  pastePreviewCell = null;
+  canvas.style.cursor = 'copy';
+  setStatus('Click where the top-left corner should land - Esc to cancel.');
+}
+
+function cancelPaste() {
+  isPasting = false;
+  pastePreviewCell = null;
+  selectTool(currentTool); // restores the correct cursor for whatever tool is still active
+  renderAll();
+}
+
+function commitPaste(col, row) {
+  var w = clipboard.w, h = clipboard.h;
+  var changes = [];
+  for (var r = 0; r < h; r++) {
+    for (var c = 0; c < w; c++) {
+      var tc = col + c, tr = row + r;
+      if (tc < 0 || tr < 0 || tc >= state.width || tr >= state.height) continue; // clip silently at the map edge instead of throwing
+      var newId = clipboard.tiles[r * w + c];
+      var prevId = state.tiles[idx(tc, tr)];
+      if (newId === prevId) continue;
+      changes.push({ col: tc, row: tr, prevId: prevId, newId: newId });
+    }
+  }
+  var originX = col * state.tileSize, originY = row * state.tileSize;
+  var newEntities = clipboard.entities.map(function(ce) {
+    var e = JSON.parse(JSON.stringify(ce));
+    e.x = originX + e.dx;
+    e.y = originY + e.dy;
+    delete e.dx;
+    delete e.dy;
+    return e;
+  });
+  var startIndex = state.entities.length;
+
+  changes.forEach(function(chg) { state.tiles[idx(chg.col, chg.row)] = chg.newId; });
+  var spliceArgs = [startIndex, 0].concat(newEntities);
+  Array.prototype.splice.apply(state.entities, spliceArgs);
+
+  pushAction({
+    do: function() {
+      changes.forEach(function(chg) { state.tiles[idx(chg.col, chg.row)] = chg.newId; });
+      var args = [startIndex, 0].concat(newEntities);
+      Array.prototype.splice.apply(state.entities, args);
+      renderTypeList(); renderEntityList(); renderAll();
+    },
+    undo: function() {
+      changes.forEach(function(chg) { state.tiles[idx(chg.col, chg.row)] = chg.prevId; });
+      state.entities.splice(startIndex, newEntities.length);
+      renderTypeList(); renderEntityList(); renderAll();
+    }
+  });
+
+  isPasting = false;
+  pastePreviewCell = null;
+  selectTool(currentTool);
+  // Select the freshly-pasted area so it's immediately visible which tiles
+  // just landed, same as any other selection - and so it can be copied or
+  // re-pasted again right away without re-dragging a box around it.
+  regionSelection = { c0: col, r0: row, c1: col + w - 1, r1: row + h - 1 };
+  selectedEntityIndex = null;
+  selectedIsPlayerStart = false;
+  updateClipboardButtons();
+  renderTypeList();
+  renderEntityList();
+  renderAll();
+  setStatus('Pasted ' + w + 'x' + h + ' at (' + col + ',' + row + ').');
+}
+
+document.getElementById('applyEditBtn').addEventListener('click', function() {
+  if (editingIndex === null) return;
+  var i = editingIndex;
+  var prev = JSON.parse(JSON.stringify(state.entities[i]));
+  var kind = document.getElementById('entityKind').value;
+  var updated = buildEntityFromForm(kind, prev.x, prev.y);
+  state.entities[i] = updated;
+  pushAction({
+    do: function() { state.entities[i] = updated; renderEntityList(); renderAll(); },
+    undo: function() { state.entities[i] = prev; renderEntityList(); renderAll(); }
+  });
+  editingIndex = null;
+  document.getElementById('applyEditBtn').style.display = 'none';
+  renderEntityList();
+  renderAll();
+  setStatus('Entity updated.');
+});
+
+// ---------- Painting ----------
+function beginStroke() { strokeChanges = new Map(); }
+
+function paintCell(col, row) {
+  if (col < 0 || row < 0 || col >= state.width || row >= state.height) return;
+  var key = col + ',' + row;
+  var newId = currentTool === 'erase' ? 0 : selectedTileId;
+  if (!strokeChanges.has(key)) {
+    strokeChanges.set(key, { col: col, row: row, prevId: state.tiles[idx(col,row)], newId: newId });
+  } else {
+    strokeChanges.get(key).newId = newId;
+  }
+  state.tiles[idx(col, row)] = newId;
+  if (currentTool === 'paint') {
+    state.tileTypes[String(selectedTileId)] = selectedCategory;
+  }
+}
+
+function endStroke() {
+  if (!strokeChanges || strokeChanges.size === 0) { strokeChanges = null; return; }
+  var changes = Array.from(strokeChanges.values());
+  pushAction({
+    do: function() { changes.forEach(function(c) { state.tiles[idx(c.col,c.row)] = c.newId; }); renderAll(); },
+    undo: function() { changes.forEach(function(c) { state.tiles[idx(c.col,c.row)] = c.prevId; }); renderAll(); }
+  });
+  strokeChanges = null;
+  renderTypeList();
+}
+
+function setPlayerStart(col, row) {
+  var prev = { x: state.playerStart.x, y: state.playerStart.y };
+  var next = { x: col * state.tileSize, y: row * state.tileSize };
+  state.playerStart = next;
+  pushAction({
+    do: function() { state.playerStart = next; renderAll(); },
+    undo: function() { state.playerStart = prev; renderAll(); }
+  });
+  renderAll();
+}
+
+function canvasToCell(e) {
+  var rect = canvas.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var y = e.clientY - rect.top;
+  return { col: Math.floor(x / DISP), row: Math.floor(y / DISP) };
+}
+
+// Unsnapped world-pixel position of the cursor (canvasToCell above already
+// floors to a grid cell, which is right for painting/placing but too coarse
+// for hit-testing a messageZone that may not fill a whole tile).
+function canvasToWorld(e) {
+  var rect = canvas.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var y = e.clientY - rect.top;
+  return { x: x * state.tileSize / DISP, y: y * state.tileSize / DISP };
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  var cell = canvasToCell(e);
+  if (isPasting) {
+    commitPaste(cell.col, cell.row);
+    return;
+  }
+  if (currentTool === 'paint' || currentTool === 'erase') {
+    isPainting = true;
+    beginStroke();
+    paintCell(cell.col, cell.row);
+    renderAll();
+  } else if (currentTool === 'start') {
+    setPlayerStart(cell.col, cell.row);
+  } else if (currentTool === 'entity') {
+    var kind = document.getElementById('entityKind').value;
+    var entity = buildEntityFromForm(kind, cell.col * state.tileSize, cell.row * state.tileSize);
+    addEntity(entity);
+    if (kind === 'messageZone') {
+      // Clear just the message text (keep width/height, since those tend to
+      // stay the same across a run of zones) so the field is blank and
+      // ready for the NEXT zone's text instead of re-placing the same
+      // message again by accident.
+      messageZoneForm.message = '';
+      renderEntityFields();
+      setStatus('Message zone placed - message field cleared for the next one.');
+    }
+  } else if (currentTool === 'select') {
+    var world = canvasToWorld(e);
+    var hit = hitTestAt(world.x, world.y);
+    if (hit && hit.kind === 'entity') {
+      startEditEntity(hit.index); // selects + highlights + opens its fields
+      dragging = { kind: 'entity', index: hit.index, startX: state.entities[hit.index].x, startY: state.entities[hit.index].y };
+    } else if (hit && hit.kind === 'playerStart') {
+      selectPlayerStart();
+      dragging = { kind: 'playerStart', startX: state.playerStart.x, startY: state.playerStart.y };
+    } else {
+      // Didn't land on anything - could be a plain deselect-click OR the
+      // start of a drag to select a rectangle of tiles/entities. Which one
+      // it was gets decided on mouseup by whether the cursor actually moved.
+      marqueeStart = cell;
+      marqueeCur = cell;
+    }
+  }
+});
+canvas.addEventListener('mousemove', function(e) {
+  if (isPasting) {
+    var pcell = canvasToCell(e);
+    if (!pastePreviewCell || pastePreviewCell.col !== pcell.col || pastePreviewCell.row !== pcell.row) {
+      pastePreviewCell = pcell;
+      renderAll();
+    }
+    return;
+  }
+  if (isPainting) {
+    var cell = canvasToCell(e);
+    paintCell(cell.col, cell.row);
+    renderAll();
+    return;
+  }
+  if (dragging) {
+    // Snapped to the tile grid, same as every other placement in this tool -
+    // keeps a dragged entity's coordinates consistent with a freshly-placed
+    // one instead of landing on some arbitrary sub-tile pixel.
+    var dcell = canvasToCell(e);
+    var nx = dcell.col * state.tileSize;
+    var ny = dcell.row * state.tileSize;
+    if (dragging.kind === 'entity') {
+      state.entities[dragging.index].x = nx;
+      state.entities[dragging.index].y = ny;
+    } else if (dragging.kind === 'playerStart') {
+      state.playerStart.x = nx;
+      state.playerStart.y = ny;
+    }
+    renderAll();
+    renderEntityList();
+    return;
+  }
+  if (marqueeStart) {
+    var mcell = canvasToCell(e);
+    if (mcell.col !== marqueeCur.col || mcell.row !== marqueeCur.row) {
+      marqueeCur = mcell;
+      renderAll();
+    }
+  }
+});
+window.addEventListener('mouseup', function() {
+  if (isPainting) endStroke();
+  isPainting = false;
+
+  if (dragging) {
+    if (dragging.kind === 'entity') {
+      var ei = dragging.index;
+      var prevX = dragging.startX, prevY = dragging.startY;
+      var newX = state.entities[ei].x, newY = state.entities[ei].y;
+      if (newX !== prevX || newY !== prevY) {
+        pushAction({
+          do: function() { state.entities[ei].x = newX; state.entities[ei].y = newY; renderAll(); renderEntityList(); },
+          undo: function() { state.entities[ei].x = prevX; state.entities[ei].y = prevY; renderAll(); renderEntityList(); }
+        });
+      }
+    } else if (dragging.kind === 'playerStart') {
+      var prevPS = { x: dragging.startX, y: dragging.startY };
+      var newPS = { x: state.playerStart.x, y: state.playerStart.y };
+      if (newPS.x !== prevPS.x || newPS.y !== prevPS.y) {
+        pushAction({
+          do: function() { state.playerStart = newPS; renderAll(); },
+          undo: function() { state.playerStart = prevPS; renderAll(); }
+        });
+      }
+    }
+    dragging = null;
+  }
+
+  if (marqueeStart) {
+    var moved = marqueeStart.col !== marqueeCur.col || marqueeStart.row !== marqueeCur.row;
+    if (moved) {
+      regionSelection = normalizeRegion(marqueeStart, marqueeCur);
+      selectedEntityIndex = null;
+      selectedIsPlayerStart = false;
+      editingIndex = null;
+      document.getElementById('applyEditBtn').style.display = 'none';
+      updateClipboardButtons();
+      var rw = regionSelection.c1 - regionSelection.c0 + 1;
+      var rh = regionSelection.r1 - regionSelection.r0 + 1;
+      setStatus('Selected ' + rw + 'x' + rh + ' tiles - Ctrl+C to copy.');
+    } else {
+      clearSelection(); // a plain click on empty space with no drag - same as before
+    }
+    marqueeStart = null;
+    marqueeCur = null;
+    renderEntityList();
+    renderAll();
+  }
+});
+canvas.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  var cell = canvasToCell(e);
+  beginStroke();
+  var prevId = state.tiles[idx(cell.col, cell.row)];
+  strokeChanges.set(cell.col+','+cell.row, { col: cell.col, row: cell.row, prevId: prevId, newId: 0 });
+  state.tiles[idx(cell.col, cell.row)] = 0;
+  endStroke();
+  renderAll();
+});
+
+// Switches the active tool AND keeps the toolbar UI (active button, cursor)
+// in sync - pulled out of the toolgrid click handler so other code (the
+// palette auto-switch below) can flip tools the same way a manual click
+// would, instead of duplicating the button/cursor bookkeeping.
+function selectTool(name) {
+  currentTool = name;
+  document.querySelectorAll('.toolgrid button').forEach(function(b) {
+    b.classList.toggle('active', b.id === 'tool-' + name);
+  });
+  canvas.style.cursor =
+    currentTool === 'select' ? 'pointer' :
+    currentTool === 'start' ? 'cell' :
+    currentTool === 'entity' ? 'copy' : 'crosshair';
+}
+
+document.querySelectorAll('.toolgrid button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectTool(btn.id.replace('tool-', ''));
+  });
+});
+
+document.querySelectorAll('.cat-btns button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectedCategory = btn.dataset.cat;
+    document.querySelectorAll('.cat-btns button').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    if (state.tiles.indexOf(selectedTileId) !== -1) {
+      state.tileTypes[String(selectedTileId)] = selectedCategory;
+      renderTypeList();
+    }
+  });
+});
+
+// ---------- Zoom ----------
+function setZoom(px) {
+  DISP = Math.max(6, Math.min(32, px));
+  document.getElementById('zoomRange').value = DISP;
+  document.getElementById('zoomLabel').textContent = DISP + 'px';
+  resizeCanvas();
+  renderAll();
+}
+document.getElementById('zoomRange').addEventListener('input', function(e) {
+  setZoom(parseInt(e.target.value, 10));
+});
+document.getElementById('canvasWrap').addEventListener('wheel', function(e) {
+  if (!e.ctrlKey) return;
+  e.preventDefault();
+  setZoom(DISP + (e.deltaY < 0 ? 1 : -1));
+}, { passive: false });
+
+// ---------- New / Import / Export ----------
+document.getElementById('newBtn').addEventListener('click', function() {
+  var w = parseInt(document.getElementById('widthInput').value, 10) || 140;
+  var h = parseInt(document.getElementById('heightInput').value, 10) || 20;
+  if (state.tiles.some(function(t) { return t !== 0; }) && !confirm('This clears the current map. Continue?')) return;
+  newMap(w, h);
+});
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+  var out = {
+    tileSize: state.tileSize,
+    width: state.width,
+    height: state.height,
+    tiles: state.tiles,
+    tileTypes: state.tileTypes,
+    entities: state.entities,
+    playerStart: state.playerStart,
+    bounds: { width: state.width * state.tileSize, height: state.height * state.tileSize }
+  };
+  var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'level.json';
+  a.click();
+  setStatus('Exported level.json');
+});
+
+document.getElementById('importBtn').addEventListener('click', function() {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function() {
+    try {
+      var data = JSON.parse(reader.result);
+      state.width = data.width;
+      state.height = data.height;
+      state.tileSize = data.tileSize || TILE;
+      state.tiles = data.tiles.slice();
+      state.tileTypes = data.tileTypes || { "0": "empty" };
+      state.entities = data.entities || [];
+      state.playerStart = data.playerStart || { x: 0, y: 0 };
+      document.getElementById('widthInput').value = state.width;
+      document.getElementById('heightInput').value = state.height;
+      clearHistory();
+      clearSelection();
+      marqueeStart = null;
+      marqueeCur = null;
+      isPasting = false;
+      pastePreviewCell = null;
+      resizeCanvas();
+      renderAll();
+      renderTypeList();
+      renderEntityList();
+      setStatus('Imported ' + file.name);
+    } catch (err) {
+      alert('Could not parse that file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// ---------- Keyboard shortcuts ----------
+window.addEventListener('keydown', function(e) {
+  var ctrlOrCmd = e.ctrlKey || e.metaKey;
+  // Don't hijack Ctrl+C/V/Z or Delete/Backspace/Escape while the user is
+  // typing in a field (e.g. copying/backspacing through a chest's message
+  // text) - let the browser's own field-level copy/paste/undo run instead.
+  var tag = document.activeElement && document.activeElement.tagName;
+  var isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+  if (ctrlOrCmd) {
+    if (isTyping) return;
+    if (e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if (e.key.toLowerCase() === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+    else if (e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+    else if (e.key.toLowerCase() === 'c') { e.preventDefault(); copySelection(); }
+    else if (e.key.toLowerCase() === 'v') { e.preventDefault(); beginPaste(); }
+    return;
+  }
+
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !isTyping) {
+    if (selectedEntityIndex !== null) {
+      e.preventDefault();
+      var i = selectedEntityIndex;
+      clearSelection();
+      deleteEntity(i);
+      setStatus('Entity deleted.');
+    }
+    // Deliberately NOT wired to the player-start marker - there's always
+    // exactly one player start, so "deleting" it would just leave (0,0)
+    // silently reselected, which is more confusing than useful.
+  } else if (e.key === 'Escape') {
+    if (isPasting) {
+      cancelPaste();
+      setStatus('Paste cancelled.');
+    } else if (pickingFor) {
+      pickingFor = null;
+      document.getElementById('palette').classList.remove('picking');
+      setStatus('Tile pick cancelled.');
+    } else if (!isTyping) {
+      clearSelection();
+    }
+  }
+});
+
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('redoBtn').addEventListener('click', redo);
+document.getElementById('copyBtn').addEventListener('click', copySelection);
+document.getElementById('pasteBtn').addEventListener('click', beginPaste);
+
+// ---------- Boot ----------
+tilesetImg.onload = function() {
+  cols = Math.floor(tilesetImg.width / TILE);
+  rows = Math.floor(tilesetImg.height / TILE);
+  buildPalette();
+  renderEntityFields();
+  newMap(state.width, state.height);
+};
+</script>
+</body>
+</html>
