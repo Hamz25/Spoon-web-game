@@ -25334,6 +25334,105 @@
       "grantsItemCount": 120,
       "closedTileId": 87,
       "openTileId": 89
+    },
+    {
+      "type": "messageZone",
+      "x": 8820,
+      "y": 270,
+      "message": "Press E to eat the cake\n",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "cat",
+      "x": 8640,
+      "y": 270
+    },
+    {
+      "type": "cat",
+      "x": 8460,
+      "y": 270
+    },
+    {
+      "type": "cat",
+      "x": 8010,
+      "y": 270
+    },
+    {
+      "type": "cat",
+      "x": 7326,
+      "y": 270
+    },
+    {
+      "type": "cat",
+      "x": 6660,
+      "y": 270
+    },
+    {
+      "type": "messageZone",
+      "x": 4356,
+      "y": 702,
+      "message": "There are cats waiting for you at the end",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "messageZone",
+      "x": 3780,
+      "y": 702,
+      "message": "You look soo beautify running hehehe",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "messageZone",
+      "x": 720,
+      "y": 666,
+      "message": "I might added new letters :)",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "chest",
+      "x": 1242,
+      "y": 558,
+      "message": "You made my day I hope I made yours",
+      "grantsItem": null,
+      "grantsItemCount": 1,
+      "closedTileId": 87,
+      "openTileId": 89
+    },
+    {
+      "type": "messageZone",
+      "x": 3348,
+      "y": 594,
+      "message": "I hope you had a great summer holiday I haven't heard from you for a while ",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "messageZone",
+      "x": 5184,
+      "y": 486,
+      "message": "Keep moving you are almost there lady",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "messageZone",
+      "x": 6246,
+      "y": 252,
+      "message": "The cake is waiting to be eaten hehehehe",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "type": "messageZone",
+      "x": 7056,
+      "y": 252,
+      "message": "Cats everywhere ",
+      "width": 32,
+      "height": 32
     }
   ],
   "playerStart": {

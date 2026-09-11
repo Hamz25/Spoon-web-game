@@ -22,6 +22,14 @@
     velocity directly and lets physics move position - plus simple
     ledge/wall lookahead so she jumps instead of walking into a gap or a
     step, and a teleport fallback if she ever falls too far behind.
+
+    UPDATED: if a level has multiple cats, they used to all follow at the
+    exact same FOLLOW_SPEED, so a group of them walked in perfect lockstep
+    and read as one cat duplicated rather than several distinct ones. Each
+    cat now rolls its own random followSpeed once, at construction, from
+    [MIN_FOLLOW_SPEED, MAX_FOLLOW_SPEED] - fixed for that cat's lifetime,
+    not re-rolled every frame, so a given cat is consistently a bit faster
+    or slower than the others instead of jittering around.
 */
 import Entity from "./Entity.js";
 import Vector2 from "../../engine/core/Vector2.js";
@@ -31,7 +39,8 @@ import { PHYSICS } from "../config/constants.js"; // reuse the SAME gravity/jump
 
 const DISCOVER_RANGE = 40;       // px - how close the player needs to get before the cat notices them and reveals herself
 const INTERACT_RANGE = 20;       // px - same "breathing room" idea as Chest.js's INTERACT_RANGE, for actually petting her
-const FOLLOW_SPEED = 140;        // px/s - a little SLOWER than the player's own MOVE_SPEED (180, see constants.js) on purpose, so she trails behind instead of overtaking or walking on top of the player
+const MIN_FOLLOW_SPEED = 110;    // px/s - slowest a cat is allowed to roll - still comfortably under the player's own MOVE_SPEED (180, see constants.js) so even the fastest-rolling cat trails behind instead of overtaking
+const MAX_FOLLOW_SPEED = 160;    // px/s - fastest a cat is allowed to roll - kept under MOVE_SPEED for the same reason
 const FOLLOW_STOP_DISTANCE = 18; // px - once she's this close (horizontally) to the spot she's chasing, just stop. Without this she'd jitter back and forth every frame trying to land on an exact pixel that keeps moving anyway
 const TELEPORT_DISTANCE = 400;   // px - straight-line distance to the player at which we give up on walking/jumping and just snap her to the player instead (stuck on geometry, player sprinted way ahead, etc.)
 const JUMP_LOOKAHEAD = 10;       // px - how far past her own edge she "looks" to decide whether there's a wall or a gap coming up
@@ -49,6 +58,14 @@ export default class Cat extends Entity {
 
         this.stateMachine = new FiniteStateMachine('waiting');
         this.#defineStates();
+
+        // NEW - rolled once per cat, at construction, so multiple cats in
+        // the same level don't all walk in lockstep at an identical speed.
+        // Picked from [MIN_FOLLOW_SPEED, MAX_FOLLOW_SPEED] and stashed on
+        // the instance (not read from the module constant directly in
+        // update()) precisely so it stays fixed for this cat's whole
+        // lifetime instead of re-rolling every frame.
+        this.followSpeed = MIN_FOLLOW_SPEED + Math.random() * (MAX_FOLLOW_SPEED - MIN_FOLLOW_SPEED);
 
         // NOT set here on purpose - PlayScene.enter() assigns this.animator
         // once cat-sprite.png/json finish loading (see the 'cat' tag check
@@ -276,7 +293,7 @@ export default class Cat extends Entity {
         const dx = targetX - this.position.x;
         if (Math.abs(dx) > FOLLOW_STOP_DISTANCE) {
             const dirSign = Math.sign(dx);
-            this.velocity.x = dirSign * FOLLOW_SPEED;
+            this.velocity.x = dirSign * this.followSpeed;
             this.facing = dirSign > 0 ? 'left' : 'right'; // face whichever way she's actually walking, same idea as Player.facing
 
             if (this.#shouldJump(dirSign, world.tilemap)) {

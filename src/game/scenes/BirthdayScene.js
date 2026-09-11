@@ -91,22 +91,22 @@ export class BirthdayScene extends PlayScene {
                 // NEW - same idea as "chest" above: world-builder's new
                 // "Cake" entity kind (see world-builder.html) exports
                 // { type: "cake", x, y, fireworkCount, triggerKey,
-                // fireworkSpread, fireworkDelay, fireworkRange } - this reads
-                // those fields straight off the entity so any number of
-                // cakes, each with their own key/spacing/range, can be
-                // placed without editing this file again. spread/delay/range
-                // are passed through as-is; Cake.js's own constructor
-                // defaults (40px/300ms/160px) cover any OLDER level JSON
-                // exported before those fields existed, where
-                // e.fireworkSpread/e.fireworkDelay/e.fireworkRange are simply
-                // undefined. UPDATED: Cake.js no longer fires one batch of
-                // fireworkCount rockets and stops - it now loops forever,
-                // sweeping a single launch point back and forth (spread px
-                // per step, delay ms apart) capped at +-fireworkRange px from
-                // the cake. fireworkCount is still read/passed here for
-                // compatibility with existing level JSON, but Cake.js itself
-                // no longer uses it.
-                cake: (e) => new Cake(e.x, e.y, e.fireworkCount, e.triggerKey, e.fireworkSpread, e.fireworkDelay, e.fireworkRange),
+                // fireworkSpread, fireworkDelay } - this reads those fields
+                // straight off the entity so any number of cakes, each with
+                // their own key/spacing, can be placed without editing this
+                // file again. spread/delay are passed through as-is;
+                // Cake.js's own constructor defaults (40px/300ms) cover any
+                // OLDER level JSON exported before those fields existed,
+                // where e.fireworkSpread/e.fireworkDelay are simply
+                // undefined. UPDATED: an earlier version of this fired one
+                // batch, then a later one made it sweep forever instead -
+                // that sweep has been reverted, so this is back to firing
+                // exactly ONE batch of fireworkCount rockets on the first
+                // press of triggerKey (see Cake.js's class header). That
+                // same triggerKey press (and every one after it) ALSO
+                // advances Cake.js's own 4-bite eating animation - there's
+                // no separate eat key/field to read here.
+                cake: (e) => new Cake(e.x, e.y, e.fireworkCount, e.triggerKey, e.fireworkSpread, e.fireworkDelay),
 
                 // Kept for any OLDER level JSON that still hardcodes these
                 // specific type names instead of the generic "chest" above -

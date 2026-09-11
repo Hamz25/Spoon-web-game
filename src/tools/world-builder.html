@@ -184,7 +184,7 @@ var messageZoneForm = { message: "", width: 32, height: 32 };
 // Firework instances it spawns (no riseImage/explodeAnimator assigned),
 // not something this editor draws differently - the marker below always
 // shows the real cake art so it's easy to find on the map.
-var cakeForm = { fireworkCount: 6, triggerKey: 'interact', fireworkSpread: 40, fireworkDelay: 300, fireworkRange: 160 };
+var cakeForm = { fireworkCount: 6, triggerKey: 'interact', fireworkSpread: 40, fireworkDelay: 300 };
 var pickingFor = null; // 'closed' | 'open' | null - chest tile-id picking mode
 
 // Known runtime item ids a Chest can hand out via its `grantsItem` field.
@@ -525,7 +525,7 @@ function entitySummary(e) {
     return e.grantsItem ? base + ' → grants: ' + e.grantsItem + ((e.grantsItemCount && e.grantsItemCount > 1) ? ' x' + e.grantsItemCount : '') : base;
   }
   if (e.type === 'messageZone') return 'msg: "' + (e.message||'').slice(0,18) + '"';
-  if (e.type === 'cake') return 'cake: looping ±' + (e.fireworkRange ?? 160) + 'px (' + (e.triggerKey||'interact') + ')';
+  if (e.type === 'cake') return 'cake: ' + (e.fireworkCount ?? 6) + ' fireworks + eat, on (' + (e.triggerKey||'interact') + ')';
   return e.type;
 }
 
@@ -588,15 +588,14 @@ function renderEntityFields() {
   }
 
   if (kind === 'cake') {
-    container.appendChild(makeNumberField('Firework count (unused - see note)', cakeForm.fireworkCount, function(v) { cakeForm.fireworkCount = v; }));
+    container.appendChild(makeNumberField('Firework count', cakeForm.fireworkCount, function(v) { cakeForm.fireworkCount = v; }));
     container.appendChild(makeTextField('Trigger key', cakeForm.triggerKey, function(v) { cakeForm.triggerKey = v; }));
-    container.appendChild(makeNumberField('Firework spread (px per step)', cakeForm.fireworkSpread, function(v) { cakeForm.fireworkSpread = v; }));
-    container.appendChild(makeNumberField('Firework delay (ms per step)', cakeForm.fireworkDelay, function(v) { cakeForm.fireworkDelay = v; }));
-    container.appendChild(makeNumberField('Firework range (max px from cake)', cakeForm.fireworkRange, function(v) { cakeForm.fireworkRange = Math.max(0, v || 0); }));
+    container.appendChild(makeNumberField('Firework spread (px between rockets)', cakeForm.fireworkSpread, function(v) { cakeForm.fireworkSpread = v; }));
+    container.appendChild(makeNumberField('Firework delay (ms between rockets)', cakeForm.fireworkDelay, function(v) { cakeForm.fireworkDelay = v; }));
     var note = document.createElement('div');
     note.style.fontSize = '11px';
     note.style.color = '#888';
-    note.textContent = 'Once lit, the cake fires one rocket every "delay" ms from a point that sweeps back and forth, moving "spread" px per step, never going further than +-"range" px from the cake before reversing (a scanning-bar loop that never stops). "Firework count" is kept for older level files but is no longer used. Cake.js defaults to 40px/300ms/160px if these are left blank on an older level file.';
+    note.textContent = 'Pressing "Trigger key" in range fires this batch of "Firework count" rockets ONCE, spaced "spread" px / "delay" ms apart - pressing it again never fires another batch. That SAME key also advances a separate 4-bite eating animation one frame per press (see Cake.js) - there\'s no separate eat key.';
     container.appendChild(note);
     var warn = document.createElement('div');
     warn.className = 'warn';
@@ -743,8 +742,7 @@ function buildEntityFromForm(kind, x, y) {
   if (kind === 'cake') return {
     type: 'cake', x: x, y: y,
     fireworkCount: cakeForm.fireworkCount, triggerKey: cakeForm.triggerKey || 'interact',
-    fireworkSpread: cakeForm.fireworkSpread, fireworkDelay: cakeForm.fireworkDelay,
-    fireworkRange: cakeForm.fireworkRange
+    fireworkSpread: cakeForm.fireworkSpread, fireworkDelay: cakeForm.fireworkDelay
   };
   return { type: kind, x: x, y: y };
 }
@@ -790,7 +788,6 @@ function startEditEntity(i) {
   } else if (e.type === 'cake') {
     cakeForm.fireworkCount = e.fireworkCount; cakeForm.triggerKey = e.triggerKey;
     cakeForm.fireworkSpread = e.fireworkSpread ?? 40; cakeForm.fireworkDelay = e.fireworkDelay ?? 300;
-    cakeForm.fireworkRange = e.fireworkRange ?? 160;
   }
   renderEntityFields();
   document.getElementById('applyEditBtn').style.display = 'block';

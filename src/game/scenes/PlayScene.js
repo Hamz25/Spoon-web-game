@@ -93,6 +93,11 @@ export class PlayScene extends Scene {
         // fixed (4 equal-width frames in a row) and doesn't need the
         // general-purpose named-clips machinery those two classes provide.
         this.cakeSpriteImagePath = options.cakeSpriteImagePath ?? '/assets/sprites/cake-sprite.png';
+        // NEW - Cake.js now draws from a SECOND, separate sheet once she's
+        // taken at least one bite (see its render()) - this is that art.
+        // Same "only fetch if the level actually has a cake" gating below
+        // covers this too, no separate check needed.
+        this.cakeEatingSpriteImagePath = options.cakeEatingSpriteImagePath ?? '/assets/sprites/cake-eating-sprite.png';
 
         // NEW - the firework rocket's art. riseImage is a plain static
         // picture (no JSON - it isn't animated while climbing), the explode
@@ -186,17 +191,22 @@ export class PlayScene extends Scene {
             }
         }
 
-        // NEW - the birthday cake's own art (Cake.js slices its 4 candle-
-        // flicker frames out of this manually - see its render(), it
-        // doesn't need a SpriteSheet/Animator instance the way Cat does).
-        // Same "only fetch it if the level actually has one" gating as cat/
-        // firework art - normal level-1 has no cake, so plain
-        // `new PlayScene(game)` never pays for this fetch.
+        // NEW - the birthday cake's own art. Cake.js slices frames out of
+        // these manually (see its render()) - it doesn't need a
+        // SpriteSheet/Animator instance the way Cat does. UPDATED: this is
+        // now TWO images, not one - the ambient candle sheet plus a
+        // separate "being eaten" sheet, see cakeEatingSpriteImagePath
+        // above and Cake.js's class header. Same "only fetch it if the
+        // level actually has one" gating as cat/firework art - normal
+        // level-1 has no cake, so plain `new PlayScene(game)` never pays
+        // for either fetch.
         const cakeEntities = this.level.entities.filter(entity => entity.tags?.has('cake'));
         if (cakeEntities.length > 0) {
             const cakeImage = await loadImage(this.cakeSpriteImagePath);
+            const cakeEatingImage = await loadImage(this.cakeEatingSpriteImagePath); // NEW - the eating sheet, see Cake.js's render()
             for (const cake of cakeEntities) {
                 cake.sprite = cakeImage; // one shared decoded image is enough - it's stateless art, not per-instance playback state
+                cake.eatingSprite = cakeEatingImage; // same reasoning - one shared image for every cake
             }
         }
 
@@ -322,6 +332,20 @@ export class PlayScene extends Scene {
     // Runs every frame, before render() - advances the simulation by dt seconds.
     update(dt) {
         const { game } = this;
+
+        // NEW - drop anything that marked itself `alive = false` last
+        // frame. Entity.js has always had this flag, but nothing ever
+        // actually read it - level.entities was just a plain array nothing
+        // pruned. Cake.js is the first thing that needs it (its eat action
+        // removes the cake once all 4 frames have been shown - see its
+        // update()). Filtering HERE, at the very top of update() rather
+        // than right after the entity loop below, is deliberate: it means
+        // an entity that goes dead partway through THIS frame's entity
+        // loop still gets drawn one last time by THIS frame's render() (the
+        // array isn't touched again until next frame), and only actually
+        // disappears on the frame after that - so a dying entity's final
+        // frame is never skipped.
+        this.level.entities = this.level.entities.filter(entity => entity.alive);
 
         // Same "bag of context" the player has always read tilemap/bounds/
         // respawnPoint out of - player/input/events are NEW additions to it,
